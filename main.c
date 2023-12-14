@@ -8,11 +8,16 @@
 #define WSGRB // For SK6805-EC15
 #define NR_LEDS 6
 
+uint16_t phases[NR_LEDS];
+int frameno;
+volatile int tween = -NR_LEDS;
+
+#define WS2812DMA_IMPLEMENTATION
 #include "ws2812b_dma_spi_led_driver.h"
 
 #include "color_utilities.h"
 
-// Callbacks that you must implement.
+// TODO implement more "christmassy" effects
 uint32_t WS2812BLEDCallback(int ledno) {
   uint8_t index = (phases[ledno]) >> 8;
   uint8_t rsbase = sintable[index];
@@ -20,25 +25,68 @@ uint32_t WS2812BLEDCallback(int ledno) {
   uint32_t fire = ((huetable[(rs + 190) & 0xff] >> 1) << 16) |
                   (huetable[(rs + 30) & 0xff]) |
                   ((huetable[(rs + 0)] >> 1) << 8);
+  if (ledno == 0)
+    return 0x0000ff;
+  else if (ledno == 1)
+    return 0x00ff00;
+  else if (ledno == 2)
+    return 0xff0000;
 
-  return fire
+  return fire;
 }
 
 int main() {
   SystemInit();
+  RCC->APB2PCENR |=
+      RCC_APB2Periph_GPIOD | RCC_APB2Periph_GPIOC | RCC_APB2Periph_GPIOA;
+
+  // Initialize rows
+  GPIOC->CFGLR &= ~(0xffff << (4 * 0));
+  GPIOC->CFGLR |= (GPIO_Speed_10MHz | GPIO_CNF_OUT_PP) << (4 * 0) |
+                  (GPIO_Speed_10MHz | GPIO_CNF_OUT_PP) << (4 * 1) |
+                  (GPIO_Speed_10MHz | GPIO_CNF_OUT_PP) << (4 * 2) |
+                  (GPIO_Speed_10MHz | GPIO_CNF_OUT_PP) << (4 * 3);
+
+  // Initialize cols
+  GPIOC->CFGLR &= ~(0xf << (4 * 5)) & ~(0xf << (4 * 7));
+  GPIOC->CFGLR |= (GPIO_Speed_10MHz | GPIO_CNF_OUT_PP) << (4 * 5) |
+                  (GPIO_Speed_10MHz | GPIO_CNF_OUT_PP) << (4 * 7);
+  GPIOA->CFGLR &= ~(0xf << (4 * 1));
+  GPIOA->CFGLR |= (GPIO_Speed_10MHz | GPIO_CNF_OUT_PP) << (4 * 1);
+  GPIOD->CFGLR &= ~(0xf << (4 * 2));
+  GPIOD->CFGLR |= (GPIO_Speed_10MHz | GPIO_CNF_OUT_PP) << (4 * 2);
+  // Turn off cols
+  GPIOC->BSHR = (1 << (5)) | (1 << (7));
+  GPIOA->BSHR = (1 << (1));
+  GPIOD->BSHR = (1 << (2));
+  // Turn on rows
+  GPIOC->BSHR = 0xf;
+
+  WS2812BDMAInit();
   usb_setup();
-  WS2812DMAInit();
+  // TODO implement reading from the touch pads
+  // TODO implement matrix output
+  // Each collumn is hooked up to a timer PWM output, use a separate timer to
+  // schedule changing the row
   frameno = 0;
+  int k;
   for (k = 0; k < NR_LEDS; k++)
     phases[k] = k << 8;
   int tweendir = 0;
   while (1) {
-#if RV003USB_EVENT_DEBUGGING
-    uint32_t *ue = GetUEvent();
-    if (ue) {
-      printf("%lu %lx %lx %lx\n", ue[0], ue[1], ue[2], ue[3]);
-    }
-#endif
+    // Now flip rapidly
+    GPIOD->BSHR = (1 << (2));
+    GPIOC->BSHR = (1 << (5)) | (1 << (16 + 7));
+    Delay_Ms(250);
+    GPIOC->BSHR = (1 << (16 + 5)) | (1 << (7));
+    Delay_Ms(250);
+    GPIOC->BSHR = (1 << (5)) | (1 << (7));
+    GPIOA->BSHR = (1 << (16 + 1));
+    Delay_Ms(250);
+    GPIOA->BSHR = (1 << (1));
+    GPIOD->BSHR = (1 << (16 + 2));
+    Delay_Ms(250);
+
     while (WS2812BLEDInUse)
       ;
 
@@ -81,25 +129,27 @@ void usb_handle_user_in_request(struct usb_endpoint *e, uint8_t *scratchpad,
     i++;
     int mode = i >> 5;
 
+    tsajoystick[1] = 0;
+    tsajoystick[2] = 0;
     // Move the mouse right, down, left and up in a square.
-    switch (mode & 3) {
-    case 0:
-      tsajoystick[1] = 1;
-      tsajoystick[2] = 0;
-      break;
-    case 1:
-      tsajoystick[1] = 0;
-      tsajoystick[2] = 1;
-      break;
-    case 2:
-      tsajoystick[1] = -1;
-      tsajoystick[2] = 0;
-      break;
-    case 3:
-      tsajoystick[1] = 0;
-      tsajoystick[2] = -1;
-      break;
-    }
+    /* switch (mode & 3) { */
+    /* case 0: */
+    /*   tsajoystick[1] = 1; */
+    /*   tsajoystick[2] = 0; */
+    /*   break; */
+    /* case 1: */
+    /*   tsajoystick[1] = 0; */
+    /*   tsajoystick[2] = 1; */
+    /*   break; */
+    /* case 2: */
+    /*   tsajoystick[1] = -1; */
+    /*   tsajoystick[2] = 0; */
+    /*   break; */
+    /* case 3: */
+    /*   tsajoystick[1] = 0; */
+    /*   tsajoystick[2] = -1; */
+    /*   break; */
+    /* } */
     usb_send_data(tsajoystick, 4, 0, sendtok);
   } else if (endp == 2) {
     // Keyboard (8 bytes)
@@ -111,7 +161,7 @@ void usb_handle_user_in_request(struct usb_endpoint *e, uint8_t *scratchpad,
 
     // Press the 'b' button every second or so.
     if ((i & 0x7f) == 0) {
-      tsajoystick[4] = 5;
+      tsajoystick[4] = 0; // was 5
     } else {
       tsajoystick[4] = 0;
     }

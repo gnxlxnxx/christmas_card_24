@@ -4,8 +4,8 @@
 //Defines the number of endpoints for this device. (Always add one for EP0). For two EPs, this should be 3.
 #define ENDPOINTS 3
 
-#define USB_DM 3
-#define USB_DP 4
+#define USB_DM 4
+#define USB_DP 3
 #define USB_DPU 5
 #define USB_PORT D
 
