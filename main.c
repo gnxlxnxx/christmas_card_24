@@ -92,9 +92,9 @@ int main() {
   while (1) {
     // Now flip rapidly
     GPIOD->BSHR = (1 << (2));
-    GPIOC->BSHR = (1 << (5)) | (1 << (16 + 7));
-    Delay_Ms(250);
     GPIOC->BSHR = (1 << (16 + 5)) | (1 << (7));
+    Delay_Ms(250);
+    GPIOC->BSHR = (1 << (5)) | (1 << (16 + 7));
     Delay_Ms(250);
     int iterations = 3;
     b1 = ReadTouchPin(GPIOA, 2, 0, iterations);
