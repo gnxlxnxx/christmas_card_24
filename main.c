@@ -1,5 +1,6 @@
 #include "ch32v003fun.h"
 #include "rv003usb.h"
+#include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -8,11 +9,15 @@
 #define WSGRB // For SK6805-EC15
 #define NR_LEDS 6
 
+volatile bool b1 = 0;
+volatile bool b2 = 0;
+
 uint16_t phases[NR_LEDS];
 int frameno;
 volatile int tween = -NR_LEDS;
 
 #define WS2812DMA_IMPLEMENTATION
+#include "ch32v003_touch_fix.h"
 #include "ws2812b_dma_spi_led_driver.h"
 
 #include "color_utilities.h"
@@ -25,10 +30,18 @@ uint32_t WS2812BLEDCallback(int ledno) {
   uint32_t fire = ((huetable[(rs + 190) & 0xff] >> 1) << 16) |
                   (huetable[(rs + 30) & 0xff]) |
                   ((huetable[(rs + 0)] >> 1) << 8);
-  if (ledno == 0)
-    return 0x0000ff;
-  else if (ledno == 1)
-    return 0x00ff00;
+  if (ledno == 0) {
+    if (b1) {
+      return 0x0000ff;
+    } else {
+      return 0x000000;
+    }
+  } else if (ledno == 1)
+    if (b2) {
+      return 0x00ff00;
+    } else {
+      return 0x0000ff;
+    }
   else if (ledno == 2)
     return 0xff0000;
 
@@ -37,8 +50,10 @@ uint32_t WS2812BLEDCallback(int ledno) {
 
 int main() {
   SystemInit();
-  RCC->APB2PCENR |=
-      RCC_APB2Periph_GPIOD | RCC_APB2Periph_GPIOC | RCC_APB2Periph_GPIOA;
+  RCC->APB2PCENR |= RCC_APB2Periph_GPIOD | RCC_APB2Periph_GPIOC |
+                    RCC_APB2Periph_GPIOA | RCC_APB2Periph_ADC1;
+
+  InitTouchADC();
 
   // Initialize rows
   GPIOC->CFGLR &= ~(0xffff << (4 * 0));
@@ -48,6 +63,7 @@ int main() {
                   (GPIO_Speed_10MHz | GPIO_CNF_OUT_PP) << (4 * 3);
 
   // Initialize cols
+  // TODO switch cols to timers
   GPIOC->CFGLR &= ~(0xf << (4 * 5)) & ~(0xf << (4 * 7));
   GPIOC->CFGLR |= (GPIO_Speed_10MHz | GPIO_CNF_OUT_PP) << (4 * 5) |
                   (GPIO_Speed_10MHz | GPIO_CNF_OUT_PP) << (4 * 7);
@@ -80,6 +96,9 @@ int main() {
     Delay_Ms(250);
     GPIOC->BSHR = (1 << (16 + 5)) | (1 << (7));
     Delay_Ms(250);
+    int iterations = 3;
+    b1 = ReadTouchPin(GPIOA, 2, 0, iterations);
+    b2 = ReadTouchPin(GPIOC, 4, 2, iterations);
     GPIOC->BSHR = (1 << (5)) | (1 << (7));
     GPIOA->BSHR = (1 << (16 + 1));
     Delay_Ms(250);
