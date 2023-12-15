@@ -29,17 +29,17 @@ uint32_t WS2812BLEDCallback(int ledno) {
   uint8_t index = (phases[ledno]) >> 8;
   uint8_t rsbase = sintable[index];
   uint8_t rs = rsbase >> 3;
-  uint32_t fire = ((huetable[(rs + 190) & 0xff] >> 1) << 16) |
-                  (huetable[(rs + 30) & 0xff]) |
-                  ((huetable[(rs + 0)] >> 1) << 8);
+  uint32_t fire = ((huetable[(rs + 190) & 0xff] >> 3) << 16) |
+                  (huetable[(rs + 30) & 0xff] >> 2) |
+                  ((huetable[(rs + 0)] >> 3) << 8);
   if (ledno == 5) {
     if (b1counter) {
-      return b1counter << 16;
+      fire |= b1counter << 16;
     }
   }
   if (ledno == 2) {
     if (b2counter) {
-      return b2counter << 16;
+      fire |= b2counter << 16;
     }
   }
 
