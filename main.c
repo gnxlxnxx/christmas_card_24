@@ -1,5 +1,6 @@
 #include "ch32v003fun.h"
 #include "rv003usb.h"
+#include <matrix.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
@@ -57,16 +58,17 @@ int main() {
 
   // Initialize rows
   GPIOC->CFGLR &= ~(0xffff << (4 * 0));
-  GPIOC->CFGLR |= (GPIO_Speed_10MHz | GPIO_CNF_OUT_PP) << (4 * 0) |
-                  (GPIO_Speed_10MHz | GPIO_CNF_OUT_PP) << (4 * 1) |
-                  (GPIO_Speed_10MHz | GPIO_CNF_OUT_PP) << (4 * 2) |
-                  (GPIO_Speed_10MHz | GPIO_CNF_OUT_PP) << (4 * 3);
+  GPIOC->CFGLR |= ((GPIO_Speed_10MHz | GPIO_CNF_OUT_PP_AF) << (4 * 0)) |
+                  ((GPIO_Speed_10MHz | GPIO_CNF_OUT_PP_AF) << (4 * 1)) |
+                  ((GPIO_Speed_10MHz | GPIO_CNF_OUT_PP_AF) << (4 * 2)) |
+                  ((GPIO_Speed_10MHz | GPIO_CNF_OUT_PP_AF) << (4 * 3));
 
   // Initialize cols
-  // TODO switch cols to timers
   GPIOC->CFGLR &= ~(0xf << (4 * 5)) & ~(0xf << (4 * 7));
   GPIOC->CFGLR |= (GPIO_Speed_10MHz | GPIO_CNF_OUT_PP) << (4 * 5) |
                   (GPIO_Speed_10MHz | GPIO_CNF_OUT_PP) << (4 * 7);
+  timer_matrix_init();
+  matrix_set_pwm(128, 64, 64, 64);
   GPIOA->CFGLR &= ~(0xf << (4 * 1));
   GPIOA->CFGLR |= (GPIO_Speed_10MHz | GPIO_CNF_OUT_PP) << (4 * 1);
   GPIOD->CFGLR &= ~(0xf << (4 * 2));
@@ -75,12 +77,9 @@ int main() {
   GPIOC->BSHR = (1 << (5)) | (1 << (7));
   GPIOA->BSHR = (1 << (1));
   GPIOD->BSHR = (1 << (2));
-  // Turn on rows
-  GPIOC->BSHR = 0xf;
 
   WS2812BDMAInit();
   usb_setup();
-  // TODO implement reading from the touch pads
   // TODO implement matrix output
   // Each collumn is hooked up to a timer PWM output, use a separate timer to
   // schedule changing the row
