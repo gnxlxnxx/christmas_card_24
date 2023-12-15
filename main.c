@@ -11,6 +11,8 @@
 
 volatile bool b1 = 0;
 volatile bool b2 = 0;
+volatile int b1counter = 0;
+volatile int b2counter = 0;
 
 uint16_t phases[NR_LEDS];
 int frameno;
@@ -30,20 +32,16 @@ uint32_t WS2812BLEDCallback(int ledno) {
   uint32_t fire = ((huetable[(rs + 190) & 0xff] >> 1) << 16) |
                   (huetable[(rs + 30) & 0xff]) |
                   ((huetable[(rs + 0)] >> 1) << 8);
-  if (ledno == 0) {
-    if (b1) {
-      return 0x0000ff;
-    } else {
-      return 0x000000;
+  if (ledno == 5) {
+    if (b1counter) {
+      return b1counter << 16;
     }
-  } else if (ledno == 1)
-    if (b2) {
-      return 0x00ff00;
-    } else {
-      return 0x0000ff;
+  }
+  if (ledno == 2) {
+    if (b2counter) {
+      return b2counter << 16;
     }
-  else if (ledno == 2)
-    return 0xff0000;
+  }
 
   return fire;
 }
@@ -92,6 +90,18 @@ int main() {
 
     if (ws2812counter == 16) {
       if (!WS2812BLEDInUse) {
+        if (b1) {
+          b1counter = 256;
+        }
+        if (b2) {
+          b2counter = 256;
+        }
+        if (b1counter) {
+          b1counter -= 8;
+        }
+        if (b2counter) {
+          b2counter -= 8;
+        }
         ws2812counter = 0;
         frameno++;
 
