@@ -6,7 +6,6 @@
 #include <string.h>
 
 #define WS2812DMA_IMPLEMENTATION
-// #define WSRBG //For WS2816C's.
 #define WSGRB // For SK6805-EC15
 #define NR_LEDS 6
 
