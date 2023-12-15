@@ -1,11 +1,33 @@
 #include "matrix.h"
 #include "ch32v003fun.h"
 
-// T2CH3
-// T1CH2
-// T2CH2
-// T1CH3
-void change_row(uint8_t row, uint8_t c1, uint8_t c2, uint8_t c3, uint8_t c4) {
+void change_col(uint8_t col, uint8_t r1, uint8_t r2, uint8_t r3, uint8_t r4) {
+  switch (col) {
+  case 0:
+    GPIOD->BSHR = (1 << (16 + 2));
+    GPIOC->BSHR = (1 << (5)) | (1 << (7));
+    GPIOA->BSHR = (1 << (1));
+    break;
+  case 1:
+    GPIOA->BSHR = (1 << (16 + 1));
+    GPIOC->BSHR = (1 << (5)) | (1 << (7));
+    GPIOD->BSHR = (1 << (2));
+    break;
+  case 2:
+    GPIOC->BSHR = (1 << (5)) | (1 << (16 + 7));
+    GPIOA->BSHR = (1 << (1));
+    GPIOD->BSHR = (1 << (2));
+    break;
+  case 3:
+    GPIOC->BSHR = (1 << (16 + 5)) | (1 << (7));
+    GPIOA->BSHR = (1 << (1));
+    GPIOD->BSHR = (1 << (2));
+    break;
+  }
+  TIM1->CH3CVR = r1;
+  TIM2->CH4CVR = r2;
+  TIM2->CH2CVR = r3;
+  TIM1->CH1CVR = r4;
   // First disable all timer outputs and stop it (i.e. disable reload)
   // Now change row
   // load new values
@@ -88,11 +110,4 @@ void timer_matrix_init(void) {
 
   // Enable TIM2
   TIM2->CTLR1 |= TIM_CEN;
-}
-
-void matrix_set_pwm(uint8_t r1, uint8_t r2, uint8_t r3, uint8_t r4) {
-  TIM1->CH3CVR = r1;
-  TIM2->CH4CVR = r2;
-  TIM2->CH2CVR = r3;
-  TIM1->CH1CVR = r4;
 }

@@ -68,7 +68,6 @@ int main() {
   GPIOC->CFGLR |= (GPIO_Speed_10MHz | GPIO_CNF_OUT_PP) << (4 * 5) |
                   (GPIO_Speed_10MHz | GPIO_CNF_OUT_PP) << (4 * 7);
   timer_matrix_init();
-  matrix_set_pwm(128, 64, 64, 64);
   GPIOA->CFGLR &= ~(0xf << (4 * 1));
   GPIOA->CFGLR |= (GPIO_Speed_10MHz | GPIO_CNF_OUT_PP) << (4 * 1);
   GPIOD->CFGLR &= ~(0xf << (4 * 2));
@@ -89,21 +88,17 @@ int main() {
     phases[k] = k << 8;
   int tweendir = 0;
   while (1) {
-    // Now flip rapidly
-    GPIOD->BSHR = (1 << (2));
-    GPIOC->BSHR = (1 << (16 + 5)) | (1 << (7));
-    Delay_Ms(250);
-    GPIOC->BSHR = (1 << (5)) | (1 << (16 + 7));
-    Delay_Ms(250);
+    change_col(0, 128, 10, 255, 0);
+    Delay_Ms(3);
+    change_col(1, 128, 255, 64, 0);
+    Delay_Ms(3);
     int iterations = 3;
     b1 = ReadTouchPin(GPIOA, 2, 0, iterations);
     b2 = ReadTouchPin(GPIOC, 4, 2, iterations);
-    GPIOC->BSHR = (1 << (5)) | (1 << (7));
-    GPIOA->BSHR = (1 << (16 + 1));
-    Delay_Ms(250);
-    GPIOA->BSHR = (1 << (1));
-    GPIOD->BSHR = (1 << (16 + 2));
-    Delay_Ms(250);
+    change_col(2, 128, 10, 255, 0);
+    Delay_Ms(3);
+    change_col(3, 128, 255, 64, 0);
+    Delay_Ms(3);
 
     while (WS2812BLEDInUse)
       ;
