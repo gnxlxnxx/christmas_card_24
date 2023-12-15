@@ -1,10 +1,10 @@
 #include "matrix.h"
 #include "ch32v003fun.h"
 
-uint8_t matrix_data[4][4] = {{128, 10, 255, 128},
-                             {128, 255, 64, 128},
-                             {128, 10, 255, 128},
-                             {128, 255, 64, 128}};
+uint8_t matrix_data[4][4] = {{32, 10, 255, 64},
+                             {255, 255, 64, 255},
+                             {64, 10, 255, 32},
+                             {255, 255, 64, 255}};
 uint8_t col = 0;
 
 void output_matrix() {
@@ -74,10 +74,10 @@ void timer_matrix_init(void) {
 
   TIM1->CHCTLR2 |= TIM_OC3M_2 | TIM_OC3M_1 | TIM_OC3PE;
 
-  TIM1->CTLR1 |= TIM_ARPE;
+  TIM1->CTLR1 = TIM_ARPE;
 
   // Enable CH1N output, positive pol
-  TIM1->CCER |= TIM_CC1NE | TIM_CC1NP;
+  TIM1->CCER |= TIM_CC1NE;
   // Enable CH3 output, positive pol
   TIM1->CCER |= TIM_CC3E;
 
