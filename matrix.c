@@ -81,12 +81,12 @@ void timer_matrix_init(void) {
   // Enable CH3 output, positive pol
   TIM1->CCER |= TIM_CC3E;
 
-  // Reload immediately
-  TIM1->SWEVGR |= TIM_UG;
-
   // Set the Capture Compare Register value to 50% initially
   TIM1->CH1CVR = 128;
   TIM1->CH3CVR = 128;
+
+  // Reload immediately
+  TIM1->SWEVGR |= TIM_UG;
 
   // Enable TIM1 outputs
   TIM1->BDTR |= TIM_MOE;

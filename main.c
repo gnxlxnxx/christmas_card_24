@@ -55,14 +55,13 @@ int main() {
 
   InitTouchADC();
 
-  // Init rows-  // Initialize rows
+  // Initialize rows
   GPIOC->CFGLR &= ~(0xffff << (4 * 0));
   GPIOC->CFGLR |= ((GPIO_Speed_10MHz | GPIO_CNF_OUT_PP_AF) << (4 * 0)) |
                   ((GPIO_Speed_10MHz | GPIO_CNF_OUT_PP_AF) << (4 * 1)) |
                   ((GPIO_Speed_10MHz | GPIO_CNF_OUT_PP_AF) << (4 * 2)) |
                   ((GPIO_Speed_10MHz | GPIO_CNF_OUT_PP_AF) << (4 * 3));
 
-  timer_matrix_init();
   // Initialize cols
   GPIOC->CFGLR &= ~(0xf << (4 * 5)) & ~(0xf << (4 * 7));
   GPIOC->CFGLR |= (GPIO_Speed_10MHz | GPIO_CNF_OUT_PP) << (4 * 5) |
@@ -74,6 +73,7 @@ int main() {
 
   WS2812BDMAInit();
   usb_setup();
+  timer_matrix_init();
   // Each collumn is hooked up to a timer PWM output, use a separate timer to
   // schedule changing the row
   frameno = 0;
@@ -82,48 +82,47 @@ int main() {
     phases[k] = k << 8;
   int tweendir = 0;
   /* matrix_data[1][1] = 128; */
+  int ws2812counter = 0;
   while (1) {
     output_matrix();
-    Delay_Ms(3);
-    output_matrix();
-    Delay_Ms(3);
-    output_matrix();
+    Delay_Ms(1);
     int iterations = 3;
     b1 = ReadTouchPin(GPIOA, 2, 0, iterations) > 20;
     b2 = ReadTouchPin(GPIOC, 4, 2, iterations) > 20;
-    Delay_Ms(3);
-    output_matrix();
-    Delay_Ms(3);
 
-    while (WS2812BLEDInUse)
-      ;
+    if (ws2812counter == 16) {
+      if (!WS2812BLEDInUse) {
+        ws2812counter = 0;
+        frameno++;
 
-    frameno++;
+        if (frameno == 1024) {
+          tweendir = 1;
+        }
+        if (frameno == 2048) {
+          tweendir = -1;
+          frameno = 0;
+        }
 
-    if (frameno == 1024) {
-      tweendir = 1;
+        if (tweendir) {
+          int t = tween + tweendir;
+          if (t > 255)
+            t = 255;
+          if (t < -NR_LEDS)
+            t = -NR_LEDS;
+          tween = t;
+        }
+
+        for (k = 0; k < NR_LEDS; k++) {
+          phases[k] += ((((rands[k & 0xff]) + 0xf) << 2) +
+                        (((rands[k & 0xff]) + 0xf) << 1)) >>
+                       1;
+        }
+
+        WS2812BDMAStart(NR_LEDS);
+      }
+    } else {
+      ws2812counter++;
     }
-    if (frameno == 2048) {
-      tweendir = -1;
-      frameno = 0;
-    }
-
-    if (tweendir) {
-      int t = tween + tweendir;
-      if (t > 255)
-        t = 255;
-      if (t < -NR_LEDS)
-        t = -NR_LEDS;
-      tween = t;
-    }
-
-    for (k = 0; k < NR_LEDS; k++) {
-      phases[k] += ((((rands[k & 0xff]) + 0xf) << 2) +
-                    (((rands[k & 0xff]) + 0xf) << 1)) >>
-                   1;
-    }
-
-    WS2812BDMAStart(NR_LEDS);
   }
 }
 
@@ -140,6 +139,8 @@ void usb_handle_user_in_request(struct usb_endpoint *e, uint8_t *scratchpad,
     tsajoystick[1] = 0;
     tsajoystick[2] = 0;
     // Move the mouse right, down, left and up in a square.
+    tsajoystick[1] = b1;
+    tsajoystick[2] = b2;
     /* switch (mode & 3) { */
     /* case 0: */
     /*   tsajoystick[1] = 1; */
