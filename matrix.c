@@ -1,6 +1,18 @@
 #include "matrix.h"
 #include "ch32v003fun.h"
 
+uint8_t matrix_data[4][4] = {{128, 10, 255, 128},
+                             {128, 255, 64, 128},
+                             {128, 10, 255, 128},
+                             {128, 255, 64, 128}};
+uint8_t col = 0;
+
+void output_matrix() {
+  col = (col + 1) % 4;
+  change_col(col, matrix_data[col][0], matrix_data[col][1], 128,
+             matrix_data[col][3]);
+}
+
 void change_col(uint8_t col, uint8_t r1, uint8_t r2, uint8_t r3, uint8_t r4) {
   switch (col) {
   case 0:

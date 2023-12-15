@@ -55,7 +55,13 @@ int main() {
 
   InitTouchADC();
 
-  // Init rows
+  // Init rows-  // Initialize rows
+  GPIOC->CFGLR &= ~(0xffff << (4 * 0));
+  GPIOC->CFGLR |= ((GPIO_Speed_10MHz | GPIO_CNF_OUT_PP_AF) << (4 * 0)) |
+                  ((GPIO_Speed_10MHz | GPIO_CNF_OUT_PP_AF) << (4 * 1)) |
+                  ((GPIO_Speed_10MHz | GPIO_CNF_OUT_PP_AF) << (4 * 2)) |
+                  ((GPIO_Speed_10MHz | GPIO_CNF_OUT_PP_AF) << (4 * 3));
+
   timer_matrix_init();
   // Initialize cols
   GPIOC->CFGLR &= ~(0xf << (4 * 5)) & ~(0xf << (4 * 7));
@@ -75,17 +81,18 @@ int main() {
   for (k = 0; k < NR_LEDS; k++)
     phases[k] = k << 8;
   int tweendir = 0;
+  /* matrix_data[1][1] = 128; */
   while (1) {
-    change_col(0, 128, 10, 255, 0);
+    output_matrix();
     Delay_Ms(3);
-    change_col(1, 128, 255, 64, 0);
+    output_matrix();
     Delay_Ms(3);
+    output_matrix();
     int iterations = 3;
     b1 = ReadTouchPin(GPIOA, 2, 0, iterations) > 20;
     b2 = ReadTouchPin(GPIOC, 4, 2, iterations) > 20;
-    change_col(2, 128, 10, 255, 0);
     Delay_Ms(3);
-    change_col(3, 128, 255, 64, 0);
+    output_matrix();
     Delay_Ms(3);
 
     while (WS2812BLEDInUse)
