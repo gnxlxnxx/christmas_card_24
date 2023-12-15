@@ -139,8 +139,6 @@ void usb_handle_user_in_request(struct usb_endpoint *e, uint8_t *scratchpad,
     tsajoystick[1] = 0;
     tsajoystick[2] = 0;
     // Move the mouse right, down, left and up in a square.
-    tsajoystick[1] = b1;
-    tsajoystick[2] = b2;
     /* switch (mode & 3) { */
     /* case 0: */
     /*   tsajoystick[1] = 1; */
@@ -165,15 +163,16 @@ void usb_handle_user_in_request(struct usb_endpoint *e, uint8_t *scratchpad,
     static int i;
     static uint8_t tsajoystick[8] = {0x00};
     usb_send_data(tsajoystick, 8, 0, sendtok);
+    tsajoystick[3] = b1 ? 0x4f : 0;
+    tsajoystick[4] = b2 ? 0x50 : 0;
+    /* i++; */
 
-    i++;
-
-    // Press the 'b' button every second or so.
-    if ((i & 0x7f) == 0) {
-      tsajoystick[4] = 0; // was 5
-    } else {
-      tsajoystick[4] = 0;
-    }
+    /* // Press the 'b' button every second or so. */
+    /* if ((i & 0x7f) == 0) { */
+    /*   tsajoystick[4] = 0; // was 5 */
+    /* } else { */
+    /*   tsajoystick[4] = 0; */
+    /* } */
   } else {
     // If it's a control transfer, empty it.
     usb_send_empty(sendtok);
