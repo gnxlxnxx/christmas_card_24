@@ -87,8 +87,8 @@ int main() {
     output_matrix();
     Delay_Ms(1);
     int iterations = 3;
-    b1 = ReadTouchPin(GPIOA, 2, 0, iterations) > 20;
-    b2 = ReadTouchPin(GPIOC, 4, 2, iterations) > 20;
+    b1 = ReadTouchPin(GPIOC, 4, 2, iterations) > 20;
+    b2 = ReadTouchPin(GPIOA, 2, 0, iterations) > 20;
 
     if (ws2812counter == 16) {
       if (!WS2812BLEDInUse) {
