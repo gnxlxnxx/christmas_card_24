@@ -23,7 +23,7 @@
 
 
 
-#define TOUCH_ADC_SAMPLE_TIME 5  // Tricky: Don't change this without a lot of experimentation.
+#define TOUCH_ADC_SAMPLE_TIME 30  // Tricky: Don't change this without a lot of experimentation.
 
 // Can either be 0 or 1.
 // If 0: Measurement low and rises high.  So more pressed is smaller number.

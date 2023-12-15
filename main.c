@@ -56,30 +56,19 @@ int main() {
 
   InitTouchADC();
 
-  // Initialize rows
-  GPIOC->CFGLR &= ~(0xffff << (4 * 0));
-  GPIOC->CFGLR |= ((GPIO_Speed_10MHz | GPIO_CNF_OUT_PP_AF) << (4 * 0)) |
-                  ((GPIO_Speed_10MHz | GPIO_CNF_OUT_PP_AF) << (4 * 1)) |
-                  ((GPIO_Speed_10MHz | GPIO_CNF_OUT_PP_AF) << (4 * 2)) |
-                  ((GPIO_Speed_10MHz | GPIO_CNF_OUT_PP_AF) << (4 * 3));
-
+  // Init rows
+  timer_matrix_init();
   // Initialize cols
   GPIOC->CFGLR &= ~(0xf << (4 * 5)) & ~(0xf << (4 * 7));
   GPIOC->CFGLR |= (GPIO_Speed_10MHz | GPIO_CNF_OUT_PP) << (4 * 5) |
                   (GPIO_Speed_10MHz | GPIO_CNF_OUT_PP) << (4 * 7);
-  timer_matrix_init();
   GPIOA->CFGLR &= ~(0xf << (4 * 1));
   GPIOA->CFGLR |= (GPIO_Speed_10MHz | GPIO_CNF_OUT_PP) << (4 * 1);
   GPIOD->CFGLR &= ~(0xf << (4 * 2));
   GPIOD->CFGLR |= (GPIO_Speed_10MHz | GPIO_CNF_OUT_PP) << (4 * 2);
-  // Turn off cols
-  GPIOC->BSHR = (1 << (5)) | (1 << (7));
-  GPIOA->BSHR = (1 << (1));
-  GPIOD->BSHR = (1 << (2));
 
   WS2812BDMAInit();
   usb_setup();
-  // TODO implement matrix output
   // Each collumn is hooked up to a timer PWM output, use a separate timer to
   // schedule changing the row
   frameno = 0;
@@ -93,8 +82,8 @@ int main() {
     change_col(1, 128, 255, 64, 0);
     Delay_Ms(3);
     int iterations = 3;
-    b1 = ReadTouchPin(GPIOA, 2, 0, iterations);
-    b2 = ReadTouchPin(GPIOC, 4, 2, iterations);
+    b1 = ReadTouchPin(GPIOA, 2, 0, iterations) > 20;
+    b2 = ReadTouchPin(GPIOC, 4, 2, iterations) > 20;
     change_col(2, 128, 10, 255, 0);
     Delay_Ms(3);
     change_col(3, 128, 255, 64, 0);
