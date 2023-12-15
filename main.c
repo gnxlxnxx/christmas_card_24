@@ -70,6 +70,7 @@ int main() {
   GPIOD->CFGLR |= (GPIO_Speed_10MHz | GPIO_CNF_OUT_PP) << (4 * 2);
 
   WS2812BDMAInit();
+  GPIOC->CFGLR |= GPIO_CNF_OUT_OD_AF << (4 * 6); // Fix WS2812 levels, needs 10K/1K pullup across Din and Vdd
   usb_setup();
   timer_matrix_init();
   // Each collumn is hooked up to a timer PWM output, use a separate timer to
