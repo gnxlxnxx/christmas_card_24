@@ -14,6 +14,11 @@ volatile bool b2 = 0;
 volatile int b1counter = 0;
 volatile int b2counter = 0;
 
+#define NUM_MODES_F 2
+#define NUM_MODES_B 2
+int mode_f = 0;
+int mode_b = 0;
+
 uint16_t phases[NR_LEDS];
 int frameno;
 volatile int tween = -NR_LEDS;
@@ -24,26 +29,79 @@ volatile int tween = -NR_LEDS;
 
 #include "color_utilities.h"
 
+
+/* White Noise Generator State */
+#define NOISE_BITS 8
+#define NOISE_MASK ((1<<NOISE_BITS)-1)
+#define NOISE_POLY_TAP0 31
+#define NOISE_POLY_TAP1 21
+#define NOISE_POLY_TAP2 1
+#define NOISE_POLY_TAP3 0
+uint32_t lfsr = 1;
+
+uint8_t rand8(void)
+{
+  uint8_t bit;
+  uint32_t new_data;
+
+  for(bit=0;bit<NOISE_BITS;bit++)
+  {
+    new_data = ((lfsr>>NOISE_POLY_TAP0) ^
+          (lfsr>>NOISE_POLY_TAP1) ^
+          (lfsr>>NOISE_POLY_TAP2) ^
+          (lfsr>>NOISE_POLY_TAP3));
+    lfsr = (lfsr<<1) | (new_data&1);
+  }
+
+  return lfsr&NOISE_MASK;
+}
+
 // TODO implement more "christmassy" effects
 uint32_t WS2812BLEDCallback(int ledno) {
-  uint8_t index = (phases[ledno]) >> 8;
-  uint8_t rsbase = sintable[index];
-  uint8_t rs = rsbase >> 3;
-  uint32_t fire = ((huetable[(rs + 190) & 0xff] >> 3) << 16) |
-                  (huetable[(rs + 30) & 0xff] >> 2) |
-                  ((huetable[(rs + 0)] >> 3) << 8);
-  if (ledno == 5) {
-    if (b1counter) {
-      fire |= b1counter << 16;
-    }
+  uint32_t value = 0;
+
+  // switch between modes on the back side
+  switch(mode_b){
+    case 0:
+      // Original "Fire" mode
+      uint8_t index = (phases[ledno]) >> 8;
+      uint8_t rsbase = sintable[index];
+      uint8_t rs = rsbase >> 3;
+      value = ((huetable[(rs + 190) & 0xff] >> 3) << 16) |
+        (huetable[(rs + 30) & 0xff] >> 2) |
+        ((huetable[(rs + 0)] >> 3) << 8);
+      break;
+    case 1:
+      // Dummy mode
+      value = 0;
+      break;
   }
-  if (ledno == 2) {
-    if (b2counter) {
-      fire |= b2counter << 16;
+
+  if(b1counter){
+    switch(ledno){
+      case 4:
+      case 0:
+        value |= (b1counter >> 2) << 16;
+        break;
+      case 5:
+        value |= b1counter << 16;
+        break;
     }
   }
 
-  return fire;
+  if(b2counter){
+    switch(ledno){
+      case 1:
+      case 3:
+        value |= (b2counter >> 2) << 16;
+        break;
+      case 2:
+        value |= b2counter << 16;
+        break;
+    }
+  }
+
+  return value;
 }
 
 int main() {
@@ -81,7 +139,73 @@ int main() {
   int tweendir = 0;
   /* matrix_data[1][1] = 128; */
   int ws2812counter = 0;
+
+  int ledcounter = 0;
+
+  int num_x = 0;
+  int num_y = 0;
+  int num_ang = 0;
+
+  uint8_t future_matrix[4][4] = {};
+
+
+
   while (1) {
+
+    // switch between modes on the front side
+    switch(mode_f){
+      case 0:
+        // random led pulse inverted
+        if (ledcounter++ >= 1){
+          if(num_x++%30 == 0)
+            future_matrix[rand8() & 0b11][(rand8()>>2) & 0b11] = 0;
+          num_x %= 250;
+
+          for(int i = 0; i < 4; i++){
+            for(int j = 0; j < 4; j++){
+              if(future_matrix[i][j] < matrix_data[i][j]){
+                matrix_data[i][j]-=1;
+              } else if(future_matrix[i][j] > matrix_data[i][j]){
+                matrix_data[i][j]+=1;
+              }
+              if(future_matrix[i][j] == matrix_data[i][j]){
+                future_matrix[i][j] = 255;
+              }
+
+            }
+          }
+          ledcounter = 0;
+        }
+
+        break;
+
+
+      case 1:
+        // random led pulse
+        if (ledcounter++ >= 1){
+          if(num_x++%30 == 0)
+            future_matrix[rand8() & 0b11][(rand8()>>2) & 0b11] = 255;
+          num_x %= 250;
+
+          for(int i = 0; i < 4; i++){
+            for(int j = 0; j < 4; j++){
+              if(future_matrix[i][j] < matrix_data[i][j]){
+                matrix_data[i][j]-=1;
+              } else if(future_matrix[i][j] > matrix_data[i][j]){
+                matrix_data[i][j]+=1;
+              }
+              if(future_matrix[i][j] == matrix_data[i][j]){
+                future_matrix[i][j] = 0;
+              }
+
+            }
+          }
+          ledcounter = 0;
+        }
+
+        break;
+    }
+
     output_matrix();
     Delay_Us(300);
     int iterations = 3;
@@ -91,16 +215,20 @@ int main() {
     if (ws2812counter == 48) {
       if (!WS2812BLEDInUse) {
         if (b1) {
-          b1counter = 256;
+          if(!b1counter)
+            mode_f = ++mode_f % NUM_MODES_F;
+          b1counter = 128;
         }
         if (b2) {
-          b2counter = 256;
+          if(!b2counter)
+            mode_b = ++mode_b % NUM_MODES_B;
+          b2counter = 128;
         }
         if (b1counter) {
-          b1counter -= 8;
+          b1counter -= 4;
         }
         if (b2counter) {
-          b2counter -= 8;
+          b2counter -= 4;
         }
         ws2812counter = 0;
         frameno++;
