@@ -1,16 +1,23 @@
-#include "ch32v003fun.h"
-#include "rv003usb.h"
-#include <matrix.h>
+#include <ch32v003fun.h>
+#include <rv003usb.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
+#include "matrix.h"
+#include "usb.h"
 
 #define WS2812DMA_IMPLEMENTATION
 #define WSGRB // For SK6805-EC15
 #define NR_LEDS 6
 
+#define TOUCH_ITERATIONS 3
+#define TOUCH_HIST_HIGH 60
+#define TOUCH_HIST_LOW 50
+
 volatile bool b1 = 0;
 volatile bool b2 = 0;
+volatile uint32_t b1a = 0;
+volatile uint32_t b2a = 0;
 volatile int b1counter = 0;
 volatile int b2counter = 0;
 
@@ -46,7 +53,14 @@ uint32_t WS2812BLEDCallback(int ledno) {
   return fire;
 }
 
-int main() {
+static void read_touches(void) {
+  b1a = ReadTouchPin(GPIOC, 4, 2, TOUCH_ITERATIONS);
+  b2a = ReadTouchPin(GPIOA, 2, 0, TOUCH_ITERATIONS);
+  b1 = b1a > (b1 ? TOUCH_HIST_LOW : TOUCH_HIST_HIGH);
+  b2 = b2a > (b2 ? TOUCH_HIST_LOW : TOUCH_HIST_HIGH);
+}
+
+int main(void) {
   SystemInit();
   RCC->APB2PCENR |= RCC_APB2Periph_GPIOD | RCC_APB2Periph_GPIOC |
                     RCC_APB2Periph_GPIOA | RCC_APB2Periph_ADC1;
@@ -82,12 +96,14 @@ int main() {
   int tweendir = 0;
   /* matrix_data[1][1] = 128; */
   int ws2812counter = 0;
+  read_touches();
+  if (b1 || b2) {
+    open_website();
+  }
   while (1) {
     output_matrix();
     Delay_Us(300);
-    int iterations = 3;
-    b1 = ReadTouchPin(GPIOC, 4, 2, iterations) > 50;
-    b2 = ReadTouchPin(GPIOA, 2, 0, iterations) > 50;
+    read_touches();
 
     if (ws2812counter == 48) {
       if (!WS2812BLEDInUse) {
@@ -134,58 +150,5 @@ int main() {
     } else {
       ws2812counter++;
     }
-  }
-}
-
-void usb_handle_user_in_request(struct usb_endpoint *e, uint8_t *scratchpad,
-                                int endp, uint32_t sendtok,
-                                struct rv003usb_internal *ist) {
-  if (endp == 1) {
-    // Mouse (4 bytes)
-    static int i;
-    static uint8_t tsajoystick[4] = {0x00, 0x00, 0x00, 0x00};
-    i++;
-    int mode = i >> 5;
-
-    tsajoystick[1] = 0;
-    tsajoystick[2] = 0;
-    // Move the mouse right, down, left and up in a square.
-    /* switch (mode & 3) { */
-    /* case 0: */
-    /*   tsajoystick[1] = 1; */
-    /*   tsajoystick[2] = 0; */
-    /*   break; */
-    /* case 1: */
-    /*   tsajoystick[1] = 0; */
-    /*   tsajoystick[2] = 1; */
-    /*   break; */
-    /* case 2: */
-    /*   tsajoystick[1] = -1; */
-    /*   tsajoystick[2] = 0; */
-    /*   break; */
-    /* case 3: */
-    /*   tsajoystick[1] = 0; */
-    /*   tsajoystick[2] = -1; */
-    /*   break; */
-    /* } */
-    usb_send_data(tsajoystick, 4, 0, sendtok);
-  } else if (endp == 2) {
-    // Keyboard (8 bytes)
-    static int i;
-    static uint8_t tsajoystick[8] = {0x00};
-    usb_send_data(tsajoystick, 8, 0, sendtok);
-    tsajoystick[3] = b1 ? 0x4f : 0;
-    tsajoystick[4] = b2 ? 0x50 : 0;
-    /* i++; */
-
-    /* // Press the 'b' button every second or so. */
-    /* if ((i & 0x7f) == 0) { */
-    /*   tsajoystick[4] = 0; // was 5 */
-    /* } else { */
-    /*   tsajoystick[4] = 0; */
-    /* } */
-  } else {
-    // If it's a control transfer, empty it.
-    usb_send_empty(sendtok);
   }
 }

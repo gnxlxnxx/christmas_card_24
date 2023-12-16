@@ -39,6 +39,42 @@ static const uint8_t device_descriptor[] = {
 	1, //Max number of configurations
 };
 
+//From http://codeandlife.com/2012/06/18/usb-hid-keyboard-with-v-usb/
+static const uint8_t keyboard_hid_desc[] = {   /* USB report descriptor */
+	HID_USAGE_PAGE( HID_USAGE_PAGE_DESKTOP ),         // USAGE_PAGE (Generic Desktop)
+	HID_USAGE( HID_USAGE_DESKTOP_KEYBOARD ),          // USAGE (Keyboard)
+	HID_COLLECTION ( HID_COLLECTION_APPLICATION ),    // COLLECTION (Application)
+		HID_REPORT_SIZE( 1 ),                         //     REPORT_SIZE (8)
+		HID_REPORT_COUNT( 8 ),                        //     REPORT_COUNT (3)
+		HID_USAGE_PAGE( HID_USAGE_PAGE_KEYBOARD ),    //     USAGE_PAGE (Keyboard)(Key Codes)
+    	HID_USAGE_MIN( 0xe0 ),                        //     USAGE_MINIMUM (Keyboard LeftControl)(224)
+    	HID_USAGE_MAX( 0xe7 ),                        //     USAGE_MAXIMUM (Keyboard Right GUI)(231)
+		HID_LOGICAL_MIN( 0 ),                         //     LOGICAL_MINIMUM (0)
+		HID_LOGICAL_MAX( 1 ),                         //     LOGICAL_MAXIMUM (1)
+		HID_INPUT( 0x02 ),                            //     INPUT (Data,Var,Abs) ; Modifier byte
+		HID_REPORT_COUNT( 1 ),                        //     REPORT_COUNT (1)
+		HID_REPORT_SIZE( 8 ),                         //     REPORT_SIZE (8)
+		HID_INPUT( 0x03 ),                            //     INPUT (Cnst,Var,Abs) ; Reserved byte
+		HID_REPORT_COUNT( 5 ),                        //     REPORT_COUNT (5)
+		HID_REPORT_SIZE( 1 ),                         //     REPORT_SIZE (1)
+		HID_USAGE_PAGE( HID_USAGE_PAGE_LED ),         //     USAGE_PAGE (LEDs)
+    	HID_USAGE_MIN( 0x01 ),                        //     USAGE_MINIMUM (Num Lock)
+	    HID_USAGE_MAX( 0x05 ),                        //     USAGE_MAXIMUM (Kana)
+		HID_OUTPUT( 0x02 ),                           //     OUTPUT (Data,Var,Abs) ; LED report
+		HID_REPORT_COUNT( 1 ),                        //     REPORT_COUNT (1)
+		HID_REPORT_SIZE( 3 ),                         //     REPORT_SIZE (3)
+		HID_OUTPUT( 0x03 ),                           //     OUTPUT (Cnst,Var,Abs) ; LED report padding
+		HID_REPORT_COUNT( 6 ),                        //     REPORT_COUNT (6)
+		HID_REPORT_SIZE( 8 ),                         //     REPORT_SIZE (8)
+		HID_LOGICAL_MIN( 0 ),                         //     LOGICAL_MINIMUM (0)
+		HID_LOGICAL_MAX( 0xf0 ),                      //     LOGICAL_MAXIMUM (167)  (Normally would be 101, but we want volume buttons)
+    	HID_USAGE_PAGE( HID_USAGE_PAGE_KEYBOARD ),    //     USAGE_PAGE (Keyboard)(Key Codes)
+    	HID_USAGE_MIN( 0x00 ),                        //     USAGE_MINIMUM (0)
+	    HID_USAGE_MAX( 0xf0 ),                        //     USAGE_MAXIMUM (Keyboard Application)(101) (Now 167)
+		HID_INPUT( 0 ),                               //     INPUT (Data,Ary,Abs)
+    HID_COLLECTION_END,                               // END_COLLECTION
+};
+
 static const uint8_t mouse_hid_desc[] = {  //From http://eleccelerator.com/tutorial-about-usb-hid-report-descriptors/
 	HID_USAGE_PAGE( HID_USAGE_PAGE_DESKTOP ),         // USAGE_PAGE (Generic Desktop)
 	HID_USAGE( HID_USAGE_DESKTOP_TABLET_PC_SYSTEM ),  // USAGE (Mouse), Ok actually a tablet but we apply relative motion!
@@ -77,45 +113,6 @@ static const uint8_t mouse_hid_desc[] = {  //From http://eleccelerator.com/tutor
 	HID_COLLECTION_END,
 };
 
-//From http://codeandlife.com/2012/06/18/usb-hid-keyboard-with-v-usb/
-static const uint8_t keyboard_hid_desc[] = {   /* USB report descriptor */
-	HID_USAGE_PAGE( HID_USAGE_PAGE_DESKTOP ),         // USAGE_PAGE (Generic Desktop)
-	HID_USAGE( HID_USAGE_DESKTOP_KEYBOARD ),          // USAGE (Keyboard)
-	HID_COLLECTION ( HID_COLLECTION_APPLICATION ),    // COLLECTION (Application)
-		HID_REPORT_SIZE( 1 ),                         //     REPORT_SIZE (8)
-		HID_REPORT_COUNT( 8 ),                        //     REPORT_COUNT (3)
-		HID_USAGE_PAGE( HID_USAGE_PAGE_KEYBOARD ),    //     USAGE_PAGE (Keyboard)(Key Codes)
-    	HID_USAGE_MIN( 0xe0 ),                        //     USAGE_MINIMUM (Keyboard LeftControl)(224)
-    	HID_USAGE_MAX( 0xe7 ),                        //     USAGE_MAXIMUM (Keyboard Right GUI)(231)
-		HID_LOGICAL_MIN( 0 ),                         //     LOGICAL_MINIMUM (0)
-		HID_LOGICAL_MAX( 1 ),                         //     LOGICAL_MAXIMUM (1)
-		HID_INPUT( 0x02 ),                            //     INPUT (Data,Var,Abs) ; Modifier byte
-		HID_REPORT_COUNT( 1 ),                        //     REPORT_COUNT (1)
-		HID_REPORT_SIZE( 8 ),                         //     REPORT_SIZE (8)
-		HID_INPUT( 0x03 ),                            //     INPUT (Cnst,Var,Abs) ; Reserved byte
-		HID_REPORT_COUNT( 5 ),                        //     REPORT_COUNT (5)
-		HID_REPORT_SIZE( 1 ),                         //     REPORT_SIZE (1)
-		HID_USAGE_PAGE( HID_USAGE_PAGE_LED ),         //     USAGE_PAGE (LEDs)
-    	HID_USAGE_MIN( 0x01 ),                        //     USAGE_MINIMUM (Num Lock)
-	    HID_USAGE_MAX( 0x05 ),                        //     USAGE_MAXIMUM (Kana)
-		HID_OUTPUT( 0x02 ),                           //     OUTPUT (Data,Var,Abs) ; LED report
-		HID_REPORT_COUNT( 1 ),                        //     REPORT_COUNT (1)
-		HID_REPORT_SIZE( 3 ),                         //     REPORT_SIZE (3)
-		HID_OUTPUT( 0x03 ),                           //     OUTPUT (Cnst,Var,Abs) ; LED report padding
-		HID_REPORT_COUNT( 6 ),                        //     REPORT_COUNT (6)
-		HID_REPORT_SIZE( 8 ),                         //     REPORT_SIZE (8)
-		HID_LOGICAL_MIN( 0 ),                         //     LOGICAL_MINIMUM (0)
-		HID_LOGICAL_MAX( 167 ),                       //     LOGICAL_MAXIMUM (167)  (Normally would be 101, but we want volume buttons)
-    	HID_USAGE_PAGE( HID_USAGE_PAGE_KEYBOARD ),     //     USAGE_PAGE (Keyboard)(Key Codes)
-    	HID_USAGE_MIN( 0x00 ),                        //     USAGE_MINIMUM (0)
-	    HID_USAGE_MAX( 167 ),                         //     USAGE_MAXIMUM (Keyboard Application)(101) (Now 167)
-	HID_INPUT( 0 ),                                   //   INPUT (Data,Ary,Abs)
-    HID_COLLECTION_END,                               // END_COLLECTION
-};
-
-//Ever wonder how you have more than 6 keys down at the same time on a USB keyboard?  It's easy. Enumerate two keyboards!
-// No, really, that's what some hardware manufacturers do.
-
 static const uint8_t config_descriptor[] = {  //Mostly stolen from a USB mouse I found.
 	// configuration descriptor, USB spec 9.6.3, page 264-266, Table 9-10
 	9, 					// bLength;
@@ -130,10 +127,37 @@ static const uint8_t config_descriptor[] = {  //Mostly stolen from a USB mouse I
 	// This descriptor shows how to embed two HIDs, to build a composite HID device.
 
 
+	//Keyboard
+	9,					// bLength
+	4,					// bDescriptorType
+	0,			// bInterfaceNumber  = 1 instead of 0 -- well make it second.
+	0,					// bAlternateSetting
+	1,					// bNumEndpoints
+	0x03,					// bInterfaceClass (0x03 = HID)
+	0x01,					// bInterfaceSubClass
+	0x01,					// bInterfaceProtocol (??)
+	0,					// iInterface
+
+	9,					// bLength
+	0x21,					// bDescriptorType (HID)
+	0x10,0x01,		//bcd 1.1
+	0x00, //country code
+	0x01, //Num descriptors
+	0x22, //DescriptorType[0] (HID)
+	sizeof(keyboard_hid_desc), 0x00,
+
+	7, //endpoint descriptor (For endpoint 1)
+	0x05, //Endpoint Descriptor (Must be 5)
+	0x81, //Endpoint Address
+	0x03, //Attributes
+	0x08,	0x00, //Size (8 bytes)
+	10, //Interval Number of milliseconds between polls.
+
+
 	//Mouse
 	9,					// bLength
 	4,					// bDescriptorType
-	0,			// bInterfaceNumber (unused, would normally be used for HID)
+	1,			// bInterfaceNumber (unused, would normally be used for HID)
 	0,					// bAlternateSetting
 	1,					// bNumEndpoints
 	0x03,					// bInterfaceClass (0x03 = HID)
@@ -151,41 +175,14 @@ static const uint8_t config_descriptor[] = {  //Mostly stolen from a USB mouse I
 
 	7, //endpoint descriptor (For endpoint 1)
 	0x05, //Endpoint Descriptor (Must be 5)
-	0x81, //Endpoint Address
+	0x82, //Endpoint Address
 	0x03, //Attributes
 	0x04,	0x00, //Size
 	10, //Interval (Number of milliseconds between polls)
-
-
-	//Keyboard  (It is unusual that this would be here)
-	9,					// bLength
-	4,					// bDescriptorType
-	1,			// bInterfaceNumber  = 1 instead of 0 -- well make it second.
-	0,					// bAlternateSetting
-	1,					// bNumEndpoints
-	0x03,					// bInterfaceClass (0x03 = HID)
-	0x01,					// bInterfaceSubClass
-	0x01,					// bInterfaceProtocol (??)
-	0,					// iInterface
-
-	9,					// bLength
-	0x21,					// bDescriptorType (HID)
-	0x10,0x01,		//bcd 1.1
-	0x00, //country code
-	0x01, //Num descriptors
-	0x22, //DescriptorType[0] (HID)
-	sizeof(keyboard_hid_desc), 0x00, 
-
-	7, //endpoint descriptor (For endpoint 1)
-	0x05, //Endpoint Descriptor (Must be 5)
-	0x82, //Endpoint Address
-	0x03, //Attributes
-	0x08,	0x00, //Size (8 bytes)
-	10, //Interval Number of milliseconds between polls.
 };
 
-#define STR_MANUFACTURER u"CNLohr"
-#define STR_PRODUCT      u"RV003USB"
+#define STR_MANUFACTURER u"Fachschaft Elektro- und Informationstechnik"
+#define STR_PRODUCT      u"Weihnachtskarte 2023"
 #define STR_SERIAL       u"000"
 
 struct usb_string_descriptor_struct {
@@ -223,8 +220,8 @@ const static struct descriptor_list_struct {
 } descriptor_list[] = {
 	{0x00000100, device_descriptor, sizeof(device_descriptor)},
 	{0x00000200, config_descriptor, sizeof(config_descriptor)},
-	{0x00002200, mouse_hid_desc, sizeof(mouse_hid_desc)},
-	{0x00012200, keyboard_hid_desc, sizeof(keyboard_hid_desc)},
+	{0x00002200, keyboard_hid_desc, sizeof(keyboard_hid_desc)},
+	{0x00012200, mouse_hid_desc, sizeof(mouse_hid_desc)},
 	{0x00000300, (const uint8_t *)&string0, 4},
 	{0x04090301, (const uint8_t *)&string1, sizeof(STR_MANUFACTURER)},
 	{0x04090302, (const uint8_t *)&string2, sizeof(STR_PRODUCT)},	
