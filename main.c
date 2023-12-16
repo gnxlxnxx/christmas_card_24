@@ -11,8 +11,8 @@
 #define NR_LEDS 6
 
 #define TOUCH_ITERATIONS 3
-#define TOUCH_HIST_HIGH 60
-#define TOUCH_HIST_LOW 50
+#define TOUCH_HIST_HIGH 80
+#define TOUCH_HIST_LOW 70
 
 volatile bool b1 = 0;
 volatile bool b2 = 0;
