@@ -131,23 +131,28 @@ void usb_handle_user_in_request(struct usb_endpoint *e, uint8_t *scratchpad,
         }
         break;
       case KBD_OP_BTN:
-        if (b1) {
-          report.keycode[i++] = HID_KEY_ARROW_RIGHT;
-        }
         if (b2) {
           report.keycode[i++] = HID_KEY_ARROW_LEFT;
+        }
+        if (b1) {
+          report.keycode[i++] = HID_KEY_ARROW_RIGHT;
         }
         break;
     }
 
-    usb_send_data(&report, sizeof(hid_keyboard_report_t), 0, sendtok);
+    usb_send_data(&report, sizeof(report), 0, sendtok);
   } else if (endp == 2) {
-    // Mouse (4 bytes)
-    static uint8_t tsajoystick[4] = {0x00, 0x00, 0x00, 0x00};
+    // Gamepad (3 bytes)
+    int8_t report[3] = {0};
 
-    tsajoystick[1] = 0;
-    tsajoystick[2] = 0;
-    usb_send_data(tsajoystick, 4, 0, sendtok);
+    uint32_t rx = b2a >> 6;
+    uint32_t ry = b1a >> 6;
+
+    report[0] = rx > INT8_MAX ? INT8_MAX : rx;
+    report[1] = ry > INT8_MAX ? INT8_MAX : ry;
+    report[2] = b2 | (b1 << 1);
+
+    usb_send_data(report, sizeof(report), 0, sendtok);
   } else {
     // If it's a control transfer, empty it.
     usb_send_empty(sendtok);

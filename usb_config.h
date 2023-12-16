@@ -20,6 +20,7 @@
 
 #include <tinyusb_hid.h>
 #include <tusb_types.h>
+#include <stdint.h>
 
 #ifdef INSTANCE_DESCRIPTORS
 //Taken from http://www.usbmadesimple.co.uk/ums_ms_desc_dev.htm
@@ -76,42 +77,30 @@ static const uint8_t keyboard_hid_desc[] = {   /* USB report descriptor */
     HID_COLLECTION_END,                               // END_COLLECTION
 };
 
-static const uint8_t mouse_hid_desc[] = {  //From http://eleccelerator.com/tutorial-about-usb-hid-report-descriptors/
+static const uint8_t gamepad_hid_desc[] = {  //From http://eleccelerator.com/tutorial-about-usb-hid-report-descriptors/
 	HID_USAGE_PAGE( HID_USAGE_PAGE_DESKTOP ),         // USAGE_PAGE (Generic Desktop)
-	HID_USAGE( HID_USAGE_DESKTOP_TABLET_PC_SYSTEM ),  // USAGE (Mouse), Ok actually a tablet but we apply relative motion!
+	HID_USAGE( HID_USAGE_DESKTOP_GAMEPAD ),  // USAGE (Gamepad)
 	HID_COLLECTION ( HID_COLLECTION_APPLICATION ),    // COLLECTION (Application)
-		HID_USAGE( HID_USAGE_DESKTOP_POINTER ),       //   USAGE (Pointer)
-		HID_COLLECTION ( HID_COLLECTION_PHYSICAL ),   //   COLLECTION (Physical)
-			HID_USAGE_PAGE( HID_USAGE_PAGE_BUTTON ),  //     USAGE_PAGE (Button)
-			HID_USAGE_MIN( 1 ),                       //     USAGE_MINIMUM (Button 1)
-			HID_USAGE_MIN( 3 ),                       //     USAGE_MAXIMUM (Button 3)
-			HID_LOGICAL_MIN( 0 ),                     //     LOGICAL_MINIMUM (0)
-			HID_LOGICAL_MAX( 1 ),                     //     LOGICAL_MAXIMUM (1)
-			HID_REPORT_COUNT( 3 ),                    //     REPORT_COUNT (3)
-			HID_REPORT_SIZE( 1 ),                     //     REPORT_SIZE (1)
-			HID_INPUT( 0x02 ),                        //     INPUT (Data,Var,Abs)
-			HID_REPORT_COUNT( 1 ),                    //     REPORT_COUNT (1)
-			HID_REPORT_SIZE( 5 ),                     //     REPORT_SIZE (5)
-			HID_INPUT( 0x03 ),                        //     INPUT (Cnst,Var,Abs)
-			HID_USAGE_PAGE( HID_USAGE_PAGE_DESKTOP ), //     USAGE_PAGE (Desktop)
-			HID_USAGE( HID_USAGE_DESKTOP_X ),         //     USAGE (X)
-			HID_USAGE( HID_USAGE_DESKTOP_Y ),         //     USAGE (Y)
-			HID_USAGE( HID_USAGE_DESKTOP_WHEEL ),     //     USAGE (Wheel)
-			HID_LOGICAL_MIN( 0x81 ),                  //     LOGICAL_MINIMUM -127
-			HID_LOGICAL_MAX( 0x7f ),                  //     LOGICAL_MAXIMUM (127)
-			HID_REPORT_SIZE( 8 ),                     //     REPORT_SIZE (8)
-			HID_REPORT_COUNT( 3 ),                    //     REPORT_COUNT (3)
-			HID_INPUT( 0x06 ),                        //     INPUT (Data,Var,Rel)
-		HID_COLLECTION_END,                           //   END_COLLECTION
+		HID_REPORT_SIZE( 8 ),
+		HID_REPORT_COUNT( 2 ),
+		HID_LOGICAL_MIN( INT8_MIN + 1 ),
+		HID_LOGICAL_MAX( INT8_MAX ),
+		HID_USAGE_PAGE( HID_USAGE_PAGE_DESKTOP ),
+		HID_USAGE( HID_USAGE_DESKTOP_RX ),
+		HID_USAGE( HID_USAGE_DESKTOP_RY ),
+		HID_INPUT( HID_DATA | HID_VARIABLE | HID_ABSOLUTE ),
+		HID_REPORT_SIZE( 1 ),
+		HID_REPORT_COUNT( 2 ),
+		HID_LOGICAL_MIN( 0 ),
+		HID_LOGICAL_MAX( 1 ),
+		HID_USAGE_PAGE( HID_USAGE_PAGE_BUTTON ),
+		HID_USAGE_MIN( 1 ),
+		HID_USAGE_MAX( 2 ),
+		HID_INPUT( HID_DATA | HID_VARIABLE | HID_ABSOLUTE ),
+		HID_REPORT_SIZE( 6 ),
+		HID_REPORT_COUNT( 1 ),
+		HID_INPUT( HID_CONSTANT | HID_VARIABLE | HID_ABSOLUTE ),
 	HID_COLLECTION_END,                               // END_COLLECTIONs
-
-	// Tack this on to do custom HID commands.
-	HID_COLLECTION ( HID_COLLECTION_APPLICATION )                 ,
-		HID_REPORT_ID    ( 0xaa                                   )
-		HID_USAGE        ( 0xff              ) ,
-		HID_FEATURE      ( HID_DATA | HID_ARRAY | HID_ABSOLUTE    ) ,
-		HID_REPORT_COUNT ( 8 ) ,
-	HID_COLLECTION_END,
 };
 
 static const uint8_t config_descriptor[] = {  //Mostly stolen from a USB mouse I found.
@@ -155,15 +144,15 @@ static const uint8_t config_descriptor[] = {  //Mostly stolen from a USB mouse I
 	10, //Interval Number of milliseconds between polls.
 
 
-	//Mouse
+	//Gamepad
 	9,					// bLength
 	TUSB_DESC_INTERFACE,	// bDescriptorType
 	1,			// bInterfaceNumber (unused, would normally be used for HID)
 	0,					// bAlternateSetting
 	1,					// bNumEndpoints
 	TUSB_CLASS_HID,		// bInterfaceClass (0x03 = HID)
-	HID_SUBCLASS_BOOT,	// bInterfaceSubClass
-	HID_PROTOCOL_MOUSE,	// bInterfaceProtocol (Mouse)
+	HID_SUBCLASS_NONE,	// bInterfaceSubClass
+	HID_PROTOCOL_NONE,	// bInterfaceProtocol
 	0,					// iInterface
 
 	9,					// bLength
@@ -172,7 +161,7 @@ static const uint8_t config_descriptor[] = {  //Mostly stolen from a USB mouse I
 	0x00, //country code
 	0x01, //Num descriptors
 	HID_DESC_TYPE_REPORT, //DescriptorType[0] (HID)
-	sizeof(mouse_hid_desc), 0x00,
+	sizeof(gamepad_hid_desc), 0x00,
 
 	7, //endpoint descriptor (For endpoint 1)
 	TUSB_DESC_ENDPOINT, //Endpoint Descriptor (Must be 5)
@@ -222,7 +211,7 @@ const static struct descriptor_list_struct {
 	{0x00000100, device_descriptor, sizeof(device_descriptor)},
 	{0x00000200, config_descriptor, sizeof(config_descriptor)},
 	{0x00002200, keyboard_hid_desc, sizeof(keyboard_hid_desc)},
-	{0x00012200, mouse_hid_desc, sizeof(mouse_hid_desc)},
+	{0x00012200, gamepad_hid_desc, sizeof(gamepad_hid_desc)},
 	{0x00000300, (const uint8_t *)&string0, 4},
 	{0x04090301, (const uint8_t *)&string1, sizeof(STR_MANUFACTURER)},
 	{0x04090302, (const uint8_t *)&string2, sizeof(STR_PRODUCT)},	
