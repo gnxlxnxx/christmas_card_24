@@ -9,7 +9,7 @@ uint8_t col = 0;
 
 void output_matrix() {
   col = (col + 1) % 4;
-  change_col(col, matrix_data[col][0], matrix_data[col][1], 128,
+  change_col(col, matrix_data[col][0], matrix_data[col][1], matrix_data[col][2],
              matrix_data[col][3]);
 }
 
