@@ -19,14 +19,15 @@
 #ifndef __ASSEMBLER__
 
 #include <tinyusb_hid.h>
+#include <tusb_types.h>
 
 #ifdef INSTANCE_DESCRIPTORS
 //Taken from http://www.usbmadesimple.co.uk/ums_ms_desc_dev.htm
 static const uint8_t device_descriptor[] = {
 	18, //Length
-	1,  //Type (Device)
+	TUSB_DESC_DEVICE,  //Type (Device)
 	0x10, 0x01, //Spec
-	0x0, //Device Class
+	TUSB_CLASS_HID, //Device Class
 	0x0, //Device Subclass
 	0x0, //Device Protocol  (000 = use config descriptor)
 	0x08, //Max packet size for EP0 (This has to be 8 because of the USB Low-Speed Standard)
@@ -51,27 +52,27 @@ static const uint8_t keyboard_hid_desc[] = {   /* USB report descriptor */
     	HID_USAGE_MAX( 0xe7 ),                        //     USAGE_MAXIMUM (Keyboard Right GUI)(231)
 		HID_LOGICAL_MIN( 0 ),                         //     LOGICAL_MINIMUM (0)
 		HID_LOGICAL_MAX( 1 ),                         //     LOGICAL_MAXIMUM (1)
-		HID_INPUT( 0x02 ),                            //     INPUT (Data,Var,Abs) ; Modifier byte
+		HID_INPUT( HID_DATA | HID_VARIABLE | HID_ABSOLUTE ), //     INPUT (Data,Var,Abs) ; Modifier byte
 		HID_REPORT_COUNT( 1 ),                        //     REPORT_COUNT (1)
 		HID_REPORT_SIZE( 8 ),                         //     REPORT_SIZE (8)
-		HID_INPUT( 0x03 ),                            //     INPUT (Cnst,Var,Abs) ; Reserved byte
+		HID_INPUT( HID_CONSTANT | HID_VARIABLE | HID_ABSOLUTE ), //     INPUT (Cnst,Var,Abs) ; Reserved byte
 		HID_REPORT_COUNT( 5 ),                        //     REPORT_COUNT (5)
 		HID_REPORT_SIZE( 1 ),                         //     REPORT_SIZE (1)
 		HID_USAGE_PAGE( HID_USAGE_PAGE_LED ),         //     USAGE_PAGE (LEDs)
     	HID_USAGE_MIN( 0x01 ),                        //     USAGE_MINIMUM (Num Lock)
 	    HID_USAGE_MAX( 0x05 ),                        //     USAGE_MAXIMUM (Kana)
-		HID_OUTPUT( 0x02 ),                           //     OUTPUT (Data,Var,Abs) ; LED report
+		HID_OUTPUT( HID_DATA | HID_VARIABLE | HID_ABSOLUTE ), //     OUTPUT (Data,Var,Abs) ; LED report
 		HID_REPORT_COUNT( 1 ),                        //     REPORT_COUNT (1)
 		HID_REPORT_SIZE( 3 ),                         //     REPORT_SIZE (3)
-		HID_OUTPUT( 0x03 ),                           //     OUTPUT (Cnst,Var,Abs) ; LED report padding
+		HID_OUTPUT( HID_CONSTANT | HID_VARIABLE | HID_ABSOLUTE ), //     OUTPUT (Cnst,Var,Abs) ; LED report padding
 		HID_REPORT_COUNT( 6 ),                        //     REPORT_COUNT (6)
 		HID_REPORT_SIZE( 8 ),                         //     REPORT_SIZE (8)
 		HID_LOGICAL_MIN( 0 ),                         //     LOGICAL_MINIMUM (0)
-		HID_LOGICAL_MAX( 0xf0 ),                      //     LOGICAL_MAXIMUM (167)  (Normally would be 101, but we want volume buttons)
+		HID_LOGICAL_MAX( 0xff ),                      //     LOGICAL_MAXIMUM (167)  (Normally would be 101, but we want volume buttons)
     	HID_USAGE_PAGE( HID_USAGE_PAGE_KEYBOARD ),    //     USAGE_PAGE (Keyboard)(Key Codes)
     	HID_USAGE_MIN( 0x00 ),                        //     USAGE_MINIMUM (0)
-	    HID_USAGE_MAX( 0xf0 ),                        //     USAGE_MAXIMUM (Keyboard Application)(101) (Now 167)
-		HID_INPUT( 0 ),                               //     INPUT (Data,Ary,Abs)
+	    HID_USAGE_MAX( 0xff ),                        //     USAGE_MAXIMUM (Keyboard Application)(101) (Now 167)
+		HID_INPUT( HID_DATA | HID_ARRAY | HID_ABSOLUTE ), //     INPUT (Data,Ary,Abs)
     HID_COLLECTION_END,                               // END_COLLECTION
 };
 
@@ -116,7 +117,7 @@ static const uint8_t mouse_hid_desc[] = {  //From http://eleccelerator.com/tutor
 static const uint8_t config_descriptor[] = {  //Mostly stolen from a USB mouse I found.
 	// configuration descriptor, USB spec 9.6.3, page 264-266, Table 9-10
 	9, 					// bLength;
-	2,					// bDescriptorType;
+	TUSB_DESC_CONFIGURATION,	// bDescriptorType;
 	0x3b, 0x00,			// wTotalLength 
 	0x02,					// bNumInterfaces (Normally 1)
 	0x01,					// bConfigurationValue
@@ -129,25 +130,25 @@ static const uint8_t config_descriptor[] = {  //Mostly stolen from a USB mouse I
 
 	//Keyboard
 	9,					// bLength
-	4,					// bDescriptorType
+	TUSB_DESC_INTERFACE,	// bDescriptorType
 	0,			// bInterfaceNumber  = 1 instead of 0 -- well make it second.
 	0,					// bAlternateSetting
 	1,					// bNumEndpoints
-	0x03,					// bInterfaceClass (0x03 = HID)
-	0x01,					// bInterfaceSubClass
-	0x01,					// bInterfaceProtocol (??)
+	TUSB_CLASS_HID,		// bInterfaceClass (0x03 = HID)
+	HID_SUBCLASS_BOOT,	// bInterfaceSubClass
+	HID_PROTOCOL_KEYBOARD,	// bInterfaceProtocol (Keyboard)
 	0,					// iInterface
 
 	9,					// bLength
-	0x21,					// bDescriptorType (HID)
+	HID_DESC_TYPE_HID,					// bDescriptorType (HID)
 	0x10,0x01,		//bcd 1.1
 	0x00, //country code
 	0x01, //Num descriptors
-	0x22, //DescriptorType[0] (HID)
+	HID_DESC_TYPE_REPORT, //DescriptorType[0] (HID)
 	sizeof(keyboard_hid_desc), 0x00,
 
 	7, //endpoint descriptor (For endpoint 1)
-	0x05, //Endpoint Descriptor (Must be 5)
+	TUSB_DESC_ENDPOINT, //Endpoint Descriptor (Must be 5)
 	0x81, //Endpoint Address
 	0x03, //Attributes
 	0x08,	0x00, //Size (8 bytes)
@@ -156,25 +157,25 @@ static const uint8_t config_descriptor[] = {  //Mostly stolen from a USB mouse I
 
 	//Mouse
 	9,					// bLength
-	4,					// bDescriptorType
+	TUSB_DESC_INTERFACE,	// bDescriptorType
 	1,			// bInterfaceNumber (unused, would normally be used for HID)
 	0,					// bAlternateSetting
 	1,					// bNumEndpoints
-	0x03,					// bInterfaceClass (0x03 = HID)
-	0x01,					// bInterfaceSubClass
-	0x02,					// bInterfaceProtocol (Mouse)
+	TUSB_CLASS_HID,		// bInterfaceClass (0x03 = HID)
+	HID_SUBCLASS_BOOT,	// bInterfaceSubClass
+	HID_PROTOCOL_MOUSE,	// bInterfaceProtocol (Mouse)
 	0,					// iInterface
 
 	9,					// bLength
-	0x21,					// bDescriptorType (HID)
+	HID_DESC_TYPE_HID,					// bDescriptorType (HID)
 	0x10,0x01,		//bcd 1.1
 	0x00, //country code
 	0x01, //Num descriptors
-	0x22, //DescriptorType[0] (HID)
+	HID_DESC_TYPE_REPORT, //DescriptorType[0] (HID)
 	sizeof(mouse_hid_desc), 0x00,
 
 	7, //endpoint descriptor (For endpoint 1)
-	0x05, //Endpoint Descriptor (Must be 5)
+	TUSB_DESC_ENDPOINT, //Endpoint Descriptor (Must be 5)
 	0x82, //Endpoint Address
 	0x03, //Attributes
 	0x04,	0x00, //Size
