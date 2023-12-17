@@ -56,6 +56,9 @@ uint8_t rand8(void)
   return lfsr&NOISE_MASK;
 }
 
+int ws2812_counter = 0;
+uint8_t snow_balls[6] = {0};
+
 // TODO implement more "christmassy" effects
 uint32_t WS2812BLEDCallback(int ledno) {
   uint32_t value = 0;
@@ -72,8 +75,30 @@ uint32_t WS2812BLEDCallback(int ledno) {
         ((huetable[(rs + 0)] >> 3) << 8);
       break;
     case 1:
-      // Dummy mode
-      value = 0;
+      // "Snowball" mode
+      if(ws2812_counter++ < 100){
+        if(snow_balls[ledno])
+          value = 0x7F7F7F;
+        else
+          value = 0;
+      } else {
+        int num_snowballs_l = 0;
+        for(int i = 4; i<=6; i++)
+          num_snowballs_l += snow_balls[i%6];
+        int num_snowballs_r = 0;
+        for(int i = 1; i<=3; i++)
+          num_snowballs_r += snow_balls[i%6];
+
+        snow_balls[3] = snow_balls[2];
+        snow_balls[2] = snow_balls[1];
+        snow_balls[1] = rand8()%(3+num_snowballs_r)?0:1;
+
+        snow_balls[4] = snow_balls[5];
+        snow_balls[5] = snow_balls[0];
+        snow_balls[0] = rand8()%(3+num_snowballs_l)?0:1;
+
+        ws2812_counter = 0;
+      }
       break;
   }
 
