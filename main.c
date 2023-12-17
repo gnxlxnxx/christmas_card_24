@@ -106,7 +106,7 @@ uint32_t WS2812BLEDCallback(int ledno) {
     switch(ledno){
       case 4:
       case 0:
-        value |= (b1counter >> 2) << 16;
+        value |= (b1counter >> 3) << 16;
         break;
       case 5:
         value |= b1counter << 16;
@@ -118,7 +118,7 @@ uint32_t WS2812BLEDCallback(int ledno) {
     switch(ledno){
       case 1:
       case 3:
-        value |= (b2counter >> 2) << 16;
+        value |= (b2counter >> 3) << 16;
         break;
       case 2:
         value |= b2counter << 16;
