@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
+#include "main.h"
 #include "matrix.h"
 #include "usb.h"
 
@@ -25,6 +26,7 @@ volatile int b2counter = 0;
 #define NUM_MODES_B 2
 int mode_f = 0;
 int mode_b = 0;
+bool lock_animations = false;
 
 uint16_t phases[NR_LEDS];
 int frameno;
@@ -178,7 +180,9 @@ int main(void) {
   int ws2812counter = 0;
 
   read_touches();
-  if (b1) {
+  if (b1 && b2) {
+    lock_animations = true;
+  } else if (b1) {
     open_url();
   } else if (b2) {
     open_url_windows();
@@ -255,12 +259,12 @@ int main(void) {
     if (ws2812counter == 48) {
       if (!WS2812BLEDInUse) {
         if (b1) {
-          if(!b1counter)
+          if(!b1counter && !lock_animations)
             mode_f = ++mode_f % NUM_MODES_F;
           b1counter = 128;
         }
         if (b2) {
-          if(!b2counter)
+          if(!b2counter && !lock_animations)
             mode_b = ++mode_b % NUM_MODES_B;
           b2counter = 128;
         }
