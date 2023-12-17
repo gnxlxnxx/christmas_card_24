@@ -25,10 +25,6 @@ typedef struct {
   } param;
 } kbd_op; // This would be more elegant in rust
 
-static const kc_element win_start_kcstr[] = {
-  {0, HID_KEY_S}, {0, HID_KEY_T}, {0, HID_KEY_A}, {0, HID_KEY_R}, {0, HID_KEY_T},
-  {0, HID_KEY_SPACE}, {-1, -1}
-};
 
 static const kc_element url_kcstr[] = {
   {KEYBOARD_MODIFIER_LEFTCTRL, HID_KEY_L}, {0, HID_KEY_H}, {0, HID_KEY_T}, {0, HID_KEY_T},
@@ -54,7 +50,6 @@ static const kbd_op kbd_ops_url_win[] = {
   {KBD_OP_SLEEP, {.op_sleep_ticks = Ticks_from_Ms(2000)}},
   {KBD_OP_KEY, {.op_key_kc = {KEYBOARD_MODIFIER_LEFTGUI, HID_KEY_R}}},
   {KBD_OP_SLEEP, {.op_sleep_ticks = Ticks_from_Ms(1000)}},
-  {KBD_OP_STR, {.op_str_kc_str = win_start_kcstr}},
   {KBD_OP_STR, {.op_str_kc_str = url_kcstr + 1}},
   {KBD_OP_BTN}
 };
