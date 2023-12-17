@@ -6,22 +6,31 @@
 #include "usb.h"
 #include "main.h"
 
-struct kc_str_element {
+typedef struct {
   uint8_t modifier;
   uint8_t keycode;
+} kc_element;
+
+typedef struct {
+  enum kbd_op_type {
+    KBD_OP_BTN = 0,
+    KBD_OP_STR,
+    KBD_OP_KEY,
+    KBD_OP_SLEEP
+  } type;
+  union kbd_op_param {
+    const kc_element *op_str_kc_str;
+    kc_element op_key_kc;
+    uint32_t op_sleep_ticks;
+  } param;
+} kbd_op; // This would be more elegant in rust
+
+static const kc_element win_start_kcstr[] = {
+  {0, HID_KEY_S}, {0, HID_KEY_T}, {0, HID_KEY_A}, {0, HID_KEY_R}, {0, HID_KEY_T},
+  {0, HID_KEY_SPACE}, {-1, -1}
 };
 
-volatile enum usb_kbd_state {
-  KBD_STATE_BTN = 0,
-  KBD_STATE_TYPE,
-  KBD_STATE_WAIT,
-  KBD_STATE_BROWSER,
-  KBD_STATE_START
-} usb_kbd_state = KBD_STATE_BTN;
-
-volatile uint32_t kbd_start_time;
-
-static const struct kc_str_element url_kc_str[] = {
+static const kc_element url_kcstr[] = {
   {KEYBOARD_MODIFIER_LEFTCTRL, HID_KEY_L}, {0, HID_KEY_H}, {0, HID_KEY_T}, {0, HID_KEY_T},
   {0, HID_KEY_P}, {0, HID_KEY_S}, {KEYBOARD_MODIFIER_LEFTSHIFT, HID_KEY_PERIOD},
   {KEYBOARD_MODIFIER_LEFTSHIFT, HID_KEY_7}, {KEYBOARD_MODIFIER_LEFTSHIFT, HID_KEY_7},
@@ -33,9 +42,59 @@ static const struct kc_str_element url_kc_str[] = {
   {0, HID_KEY_A}, {0, HID_KEY_R}, {0, HID_KEY_D}, {0, HID_KEY_ENTER}, {-1, -1}
 }; // DE layout
 
-void open_website(void) {
-  kbd_start_time = SysTick->CNT;
-  usb_kbd_state = KBD_STATE_START;
+static kbd_op kbd_op_initial = {KBD_OP_BTN}; //TODO: Investigate linker error when const
+static const kbd_op kbd_ops_url[] = {
+  {KBD_OP_SLEEP, {.op_sleep_ticks = Ticks_from_Ms(2000)}},
+  {KBD_OP_KEY, {.op_key_kc = {0, 0xf0}}},
+  {KBD_OP_SLEEP, {.op_sleep_ticks = Ticks_from_Ms(4000)}},
+  {KBD_OP_STR, {.op_str_kc_str = url_kcstr}},
+  {KBD_OP_BTN}
+};
+static const kbd_op kbd_ops_url_win[] = {
+  {KBD_OP_SLEEP, {.op_sleep_ticks = Ticks_from_Ms(2000)}},
+  {KBD_OP_KEY, {.op_key_kc = {KEYBOARD_MODIFIER_LEFTGUI, HID_KEY_R}}},
+  {KBD_OP_SLEEP, {.op_sleep_ticks = Ticks_from_Ms(1000)}},
+  {KBD_OP_STR, {.op_str_kc_str = win_start_kcstr}},
+  {KBD_OP_STR, {.op_str_kc_str = url_kcstr + 1}},
+  {KBD_OP_BTN}
+};
+
+volatile static struct kbd_state {
+  const kbd_op *op;
+  union kbd_op_state {
+    struct kbd_op_str_state {
+      const kc_element *pos;
+      unsigned int i;
+    } op_str;
+    unsigned int op_key_i;
+    uint32_t op_sleep_begin;
+  } state;
+} kbd_state = {&kbd_op_initial};
+
+static void kbd_goto(const kbd_op *op) {
+  switch (op->type) {
+    case KBD_OP_SLEEP:
+      kbd_state.state.op_sleep_begin = SysTick->CNT;
+      break;
+    case KBD_OP_KEY:
+      kbd_state.state.op_key_i = 0;
+      break;
+    case KBD_OP_STR:
+      kbd_state.state.op_str.pos = op->param.op_str_kc_str;
+      kbd_state.state.op_str.i = 0;
+      break;
+    case KBD_OP_BTN:
+  }
+
+  kbd_state.op = op;
+}
+
+void open_url(void) {
+  kbd_goto(kbd_ops_url);
+}
+
+void open_url_windows(void) {
+  kbd_goto(kbd_ops_url_win);
 }
 
 void usb_handle_user_in_request(struct usb_endpoint *e, uint8_t *scratchpad,
@@ -43,48 +102,40 @@ void usb_handle_user_in_request(struct usb_endpoint *e, uint8_t *scratchpad,
                                 struct rv003usb_internal *ist) {
   if (endp == 1) {
     // Keyboard (8 bytes)
-    static int cnt = 0;
-    static const struct kc_str_element *cur_kc_str = NULL;
     int i = 0;
     hid_keyboard_report_t report = {};
+    const kbd_op *op = kbd_state.op;
+    struct kbd_op_str_state *op_str_state = &kbd_state.state.op_str;
 
-    switch (usb_kbd_state) {
-      case KBD_STATE_START:
-        if (SysTick->CNT - kbd_start_time >= Ticks_from_Ms(2000)) {
-          cnt = 0;
-          usb_kbd_state = KBD_STATE_BROWSER;
+    switch (op->type) {
+      case KBD_OP_SLEEP:
+        if (SysTick->CNT - kbd_state.state.op_sleep_begin >= op->param.op_sleep_ticks) {
+          kbd_goto(op + 1);
         }
         break;
-      case KBD_STATE_BROWSER:
-        if (cnt++ <= 1) {
-          report.keycode[0] = 0xf0;
+      case KBD_OP_KEY:
+        if (kbd_state.state.op_key_i++ <= 1) {
+          report.modifier = op->param.op_key_kc.modifier;
+          report.keycode[0] = op->param.op_key_kc.keycode;
         } else {
-          kbd_start_time = SysTick->CNT;
-          usb_kbd_state = KBD_STATE_WAIT;
+          kbd_goto(op + 1);
         }
         break;
-      case KBD_STATE_WAIT:
-        if (SysTick->CNT - kbd_start_time >= Ticks_from_Ms(3000)) {
-          cnt = 0;
-          cur_kc_str = url_kc_str;
-          usb_kbd_state = KBD_STATE_TYPE;
-        }
-        break;
-      case KBD_STATE_TYPE:
-        if (cur_kc_str->keycode != (uint8_t)-1) {
-          if (cnt <= 1) {
-            report.modifier = cur_kc_str->modifier;
-            report.keycode[0] = cur_kc_str->keycode;
+      case KBD_OP_STR:
+        if (op_str_state->pos->keycode != (uint8_t)-1) {
+          if (op_str_state->i <= 1) {
+            report.modifier = op_str_state->pos->modifier;
+            report.keycode[0] = op_str_state->pos->keycode;
           }
-          if (cnt++ >= 3) {
-            cnt = 0;
-            cur_kc_str++;
+          if (op_str_state->i++ >= 3) {
+            op_str_state->i = 0;
+            op_str_state->pos++;
           }
         } else {
-          usb_kbd_state = KBD_STATE_BTN;
+          kbd_goto(op + 1);
         }
         break;
-      case KBD_STATE_BTN:
+      case KBD_OP_BTN:
         if (b1) {
           report.keycode[i++] = HID_KEY_ARROW_RIGHT;
         }
@@ -93,6 +144,7 @@ void usb_handle_user_in_request(struct usb_endpoint *e, uint8_t *scratchpad,
         }
         break;
     }
+
     usb_send_data(&report, sizeof(hid_keyboard_report_t), 0, sendtok);
   } else if (endp == 2) {
     // Mouse (4 bytes)

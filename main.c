@@ -96,10 +96,14 @@ int main(void) {
   int tweendir = 0;
   /* matrix_data[1][1] = 128; */
   int ws2812counter = 0;
+
   read_touches();
-  if (b1 || b2) {
-    open_website();
+  if (b1) {
+    open_url();
+  } else if (b2) {
+    open_url_windows();
   }
+
   while (1) {
     output_matrix();
     Delay_Us(300);
