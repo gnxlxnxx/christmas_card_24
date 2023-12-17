@@ -182,7 +182,7 @@ int main() {
     switch(mode_f){
       case 0:
         // random led pulse inverted
-        if (ledcounter++ >= 1){
+        if (ledcounter++ >= 40){
           if(num_x++%30 == 0)
             future_matrix[rand8() & 0b11][(rand8()>>2) & 0b11] = 0;
           num_x %= 250;
@@ -208,7 +208,7 @@ int main() {
 
       case 1:
         // random led pulse
-        if (ledcounter++ >= 1){
+        if (ledcounter++ >= 40){
           if(num_x++%30 == 0)
             future_matrix[rand8() & 0b11][(rand8()>>2) & 0b11] = 255;
           num_x %= 250;
