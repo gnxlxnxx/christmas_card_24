@@ -14,36 +14,31 @@ void output_matrix() {
 }
 
 void change_col(uint8_t col, uint8_t r1, uint8_t r2, uint8_t r3, uint8_t r4) {
-  switch (col) {
-  case 0:
-    GPIOD->BSHR = (1 << (16 + 2));
-    GPIOC->BSHR = (1 << (5)) | (1 << (7));
-    GPIOA->BSHR = (1 << (1));
-    break;
-  case 1:
-    GPIOA->BSHR = (1 << (16 + 1));
-    GPIOC->BSHR = (1 << (5)) | (1 << (7));
-    GPIOD->BSHR = (1 << (2));
-    break;
-  case 2:
-    GPIOC->BSHR = (1 << (5)) | (1 << (16 + 7));
-    GPIOA->BSHR = (1 << (1));
-    GPIOD->BSHR = (1 << (2));
-    break;
-  case 3:
-    GPIOC->BSHR = (1 << (16 + 5)) | (1 << (7));
-    GPIOA->BSHR = (1 << (1));
-    GPIOD->BSHR = (1 << (2));
-    break;
-  }
+  // First disable everything
+  GPIOD->BSHR = (1 << (2));
+  GPIOC->BSHR = (1 << (5)) | (1 << (7));
+  GPIOA->BSHR = (1 << (1));
   TIM1->CH3CVR = r1;
   TIM2->CH4CVR = r2;
   TIM2->CH2CVR = r3;
   TIM1->CH1CVR = r4;
-  // First disable all timer outputs and stop it (i.e. disable reload)
-  // Now change row
-  // load new values
-  // Start again in the same order as before
+  // Let's wait a bit until the changes are applied
+  Delay_Us(10);
+  // And switch the collumn on again
+  switch (col) {
+  case 0:
+    GPIOD->BSHR = (1 << (16 + 2));
+    break;
+  case 1:
+    GPIOA->BSHR = (1 << (16 + 1));
+    break;
+  case 2:
+    GPIOC->BSHR = (1 << (5)) | (1 << (16 + 7));
+    break;
+  case 3:
+    GPIOC->BSHR = (1 << (16 + 5)) | (1 << (7));
+    break;
+  }
 }
 
 // Timer 2 has TIM2_RM=01, PC2 CH2, PC1 CH4
