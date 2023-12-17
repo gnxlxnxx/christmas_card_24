@@ -145,15 +145,19 @@ void usb_handle_user_in_request(struct usb_endpoint *e, uint8_t *scratchpad,
     // Gamepad (2 bytes)
     int8_t report[2] = {0};
 
-    int x = (b1a >> 6) - (b2a >> 6);
+    if (b1 || b2) {
+      int shift_val = (b1 && b2) ? 4 : 6;
+      int x = (b1a >> shift_val) - (b2a >> shift_val);
 
-    if (x > INT8_MAX) {
-      report[0] = INT8_MAX;
-    } else if (x <= INT8_MIN) {
-      report[0] = INT8_MIN + 1;
-    } else {
-      report[0] = x;
+      if (x > INT8_MAX) {
+        report[0] = INT8_MAX;
+      } else if (x <= INT8_MIN) {
+        report[0] = INT8_MIN + 1;
+      } else {
+        report[0] = x;
+      }
     }
+
     report[1] = b2 | (b1 << 1);
 
     usb_send_data(report, sizeof(report), 0, sendtok);
