@@ -38,7 +38,7 @@ static const kc_element url_kcstr[] = {
   {0, HID_KEY_A}, {0, HID_KEY_R}, {0, HID_KEY_D}, {0, HID_KEY_ENTER}, {-1, -1}
 }; // DE layout
 
-static kbd_op kbd_op_initial = {KBD_OP_BTN}; //TODO: Investigate linker error when const
+static const kbd_op kbd_op_initial[2] = {KBD_OP_BTN}; //TODO: Investigate section type conflict
 static const kbd_op kbd_ops_url[] = {
   {KBD_OP_SLEEP, {.op_sleep_ticks = Ticks_from_Ms(2000)}},
   {KBD_OP_KEY, {.op_key_kc = {0, 0xf0}}},
@@ -64,7 +64,7 @@ volatile static struct kbd_state {
     unsigned int op_key_i;
     uint32_t op_sleep_begin;
   } state;
-} kbd_state = {&kbd_op_initial};
+} kbd_state = {kbd_op_initial};
 
 static void kbd_goto(const kbd_op *op) {
   switch (op->type) {

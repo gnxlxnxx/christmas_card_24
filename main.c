@@ -23,7 +23,7 @@ volatile int b1counter = 0;
 volatile int b2counter = 0;
 
 #define NUM_MODES_F 4
-#define NUM_MODES_B 2
+#define NUM_MODES_B 3
 int mode_f = 0;
 int mode_b = 0;
 bool lock_animations = false;
@@ -65,6 +65,8 @@ uint32_t snow_balls[6] = {0};
 uint32_t desired_output[6] = {0};
 uint32_t output[6] = {0};
 uint8_t i = 0;
+
+const uint8_t led_angles[9] = {0, 43, 85, 128, 171, 213}; // TODO: Investigate section type conflict
 
 uint32_t WS2812BLEDCallback(int ledno) {
 
@@ -109,6 +111,16 @@ uint32_t WS2812BLEDCallback(int ledno) {
                                 (huetable[(hue + 0)] << 8);
 
       ws2812_counter = 0;
+    }
+    break;
+  case 2:
+    // "Huewheel" mode
+    uint8_t ang = (ws2812_counter >> 3) + led_angles[ledno];
+    desired_output[ledno] = huetable[(ang + 170) & 0xff] << 16 |
+                            huetable[(ang + 85) & 0xff] |
+                            huetable[ang & 0xff] << 8;
+    if (ledno == NR_LEDS - 1) {
+      ws2812_counter = (ws2812_counter + 1) & 0x7ff;
     }
     break;
   }
