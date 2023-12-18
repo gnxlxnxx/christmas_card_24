@@ -67,10 +67,10 @@ static const uint8_t keyboard_hid_desc[] = {   /* USB report descriptor */
 		HID_REPORT_COUNT( 6 ),                        //     REPORT_COUNT (6)
 		HID_REPORT_SIZE( 8 ),                         //     REPORT_SIZE (8)
 		HID_LOGICAL_MIN( 0 ),                         //     LOGICAL_MINIMUM (0)
-		HID_LOGICAL_MAX( 167 ),                       //     LOGICAL_MAXIMUM (167)  (Normally would be 101, but we want volume buttons)
+		HID_LOGICAL_MAX( 0xff ),                       //     LOGICAL_MAXIMUM (167)  (Normally would be 101, but we want volume buttons)
     	HID_USAGE_PAGE( HID_USAGE_PAGE_KEYBOARD ),     //     USAGE_PAGE (Keyboard)(Key Codes)
     	HID_USAGE_MIN( 0x00 ),                        //     USAGE_MINIMUM (0)
-	    HID_USAGE_MAX( 167 ),                         //     USAGE_MAXIMUM (Keyboard Application)(101) (Now 167)
+	    HID_USAGE_MAX( 0xff ),                         //     USAGE_MAXIMUM (Keyboard Application)(101) (Now 167)
 	HID_INPUT( 0 ),                                   //   INPUT (Data,Ary,Abs)
     HID_COLLECTION_END,                               // END_COLLECTION
 };
