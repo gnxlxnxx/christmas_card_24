@@ -289,18 +289,16 @@ int main(void) {
 
     case 3:
       // sparkle
-      if (ledcounter2++ >= 8) {
+      if (ledcounter2++ >= 16) {
         for (int i = 0; i < 4; i++) {
           for (int j = 0; j < 4; j++) {
             uint8_t cur = matrix_data[i][j];
-            //matrix_data[i][j] = (cur >> 1) + (cur >> 2) + (cur >> 3);
-            //matrix_data[i][j] = (cur - (cur >> 8)) >> 8;
             matrix_data[i][j] = ((cur << 6) - cur) >> 6;
           }
         }
         ledcounter2 = 0;
       }
-      if (ledcounter++ >= 256) {
+      if (ledcounter++ >= 512) {
         if (rand8() < 128) {
           uint8_t rand = rand8();
           matrix_data[rand & 0x3][(rand >> 2) & 0x3] = 255;
