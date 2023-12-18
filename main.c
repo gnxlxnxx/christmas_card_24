@@ -66,11 +66,12 @@ uint8_t rand8(void)
 }
 
 int ws2812_counter = 0;
-uint8_t snow_balls[6] = {0};
+uint32_t snow_balls[6] = {0};
+uint32_t desired_output[6] = {0};
+uint32_t output[6] = {0};
+uint8_t i = 0;
 
-// TODO implement more "christmassy" effects
 uint32_t WS2812BLEDCallback(int ledno) {
-  uint32_t value = 0;
 
   // switch between modes on the back side
   switch(mode_b){
@@ -79,38 +80,51 @@ uint32_t WS2812BLEDCallback(int ledno) {
       uint8_t index = (phases[ledno]) >> 8;
       uint8_t rsbase = sintable[index];
       uint8_t rs = rsbase >> 3;
-      value = ((huetable[(rs + 190) & 0xff] >> 3) << 16) |
+      desired_output[ledno] = ((huetable[(rs + 190) & 0xff] >> 3) << 16) |
         (huetable[(rs + 30) & 0xff] >> 2) |
         ((huetable[(rs + 0)] >> 3) << 8);
       break;
     case 1:
       // "Snowball" mode
-      if(ws2812_counter++ < 100){
-        if(snow_balls[ledno])
-          value = 0x7F7F7F;
-        else
-          value = 0;
+      if(ws2812_counter++ < 300){
+          desired_output[ledno] = snow_balls[ledno];
       } else {
         int num_snowballs_l = 0;
         for(int i = 4; i<=6; i++)
-          num_snowballs_l += snow_balls[i%6];
+          num_snowballs_l += !!snow_balls[i%6];
         int num_snowballs_r = 0;
         for(int i = 1; i<=3; i++)
-          num_snowballs_r += snow_balls[i%6];
-
+          num_snowballs_r += !!snow_balls[i%6];
+        uint8_t hue = rand8();
         snow_balls[3] = snow_balls[2];
         snow_balls[2] = snow_balls[1];
-        snow_balls[1] = rand8()%(3+num_snowballs_r)?0:1;
+        snow_balls[1] = rand8()%(3+num_snowballs_r)?0:
+(huetable[(hue + 170) & 0xff]  << 16) |
+        huetable[(hue + 85) & 0xff]  |
+        (huetable[(hue + 0)] << 8);
 
+        hue = rand8();
         snow_balls[4] = snow_balls[5];
         snow_balls[5] = snow_balls[0];
-        snow_balls[0] = rand8()%(3+num_snowballs_l)?0:1;
+        snow_balls[0] = rand8()%(3+num_snowballs_l)?0:
+(huetable[(hue + 170) & 0xff]  << 16) |
+        huetable[(hue + 85) & 0xff]  |
+        (huetable[(hue + 0)] << 8);
 
         ws2812_counter = 0;
       }
       break;
   }
 
+  for (i = 0; i < 3; i++) {
+    if (((output[ledno] >> (i << 3)) & 0xFF) > ((desired_output[ledno] >> (i << 3)) & 0xFF)) {
+      output[ledno] -= 1 << (i << 3);
+    } else if (((output[ledno] >> (i << 3)) & 0xFF) < ((desired_output[ledno] >> (i << 3)) & 0xFF)) {
+      output[ledno] += 1 << (i << 3);
+    }
+  }
+
+  uint32_t value = output[ledno];
   if(b1counter){
     switch(ledno){
       case 4:
