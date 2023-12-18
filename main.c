@@ -1,7 +1,7 @@
-#include <ch32v003fun.h>
 #include "main.h"
 #include "matrix.h"
 #include "usb.h"
+#include <ch32v003fun.h>
 #include <rv003usb.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -66,7 +66,8 @@ uint32_t desired_output[6] = {0};
 uint32_t output[6] = {0};
 uint8_t i = 0;
 
-const uint8_t led_angles[9] = {0, 43, 85, 128, 171, 213}; // TODO: Investigate section type conflict
+const uint8_t led_angles[9] = {
+    0, 43, 85, 128, 171, 213}; // TODO: Investigate section type conflict
 
 uint32_t WS2812BLEDCallback(int ledno) {
 
@@ -218,8 +219,6 @@ int main(void) {
   int ledcounter = 0, ledcounter2 = 0;
 
   int num_x = 0;
-  int num_y = 0;
-  int num_ang = 0;
 
   uint8_t future_matrix[4][4] = {};
 
@@ -278,7 +277,8 @@ int main(void) {
     case 2:
       // snowfall
       if (ledcounter++ >= 1024) {
-        memmove(&matrix_data[1][0], matrix_data, 3 * 4 * sizeof(matrix_data[0][0]));
+        memmove(&matrix_data[1][0], matrix_data,
+                3 * 4 * sizeof(matrix_data[0][0]));
         for (int i = 0; i < 4; i++) {
           matrix_data[0][i] = rand8() < 96 ? rand8() : 0;
         }
