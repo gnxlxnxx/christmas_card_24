@@ -22,7 +22,7 @@ volatile uint32_t b2a = 0;
 volatile int b1counter = 0;
 volatile int b2counter = 0;
 
-#define NUM_MODES_F 2
+#define NUM_MODES_F 3
 #define NUM_MODES_B 2
 int mode_f = 0;
 int mode_b = 0;
@@ -260,6 +260,18 @@ int main(void) {
         }
         ledcounter = 0;
       }
+
+      break;
+
+      case 2:
+        // snowfall
+        if (ledcounter++ >= 1024) {
+          memmove(&matrix_data[1][0], matrix_data, 3 * 4 * sizeof(matrix_data[0][0]));
+          for (int i = 0; i < 4; i++) {
+            matrix_data[0][i] = rand8() < 96 ? rand8() : 0;
+          }
+          ledcounter = 0;
+        }
 
       break;
     }
