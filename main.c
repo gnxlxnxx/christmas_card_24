@@ -9,11 +9,11 @@
 
 #define WS2812DMA_IMPLEMENTATION
 #define WSGRB // For SK6805-EC15
-#define NR_LEDS 6
+#define NR_LEDS 5
 
-#define TOUCH_ITERATIONS 3
-#define TOUCH_HIST_HIGH 80
-#define TOUCH_HIST_LOW 70
+/* #define TOUCH_ITERATIONS 3 */
+/* #define TOUCH_HIST_HIGH 80 */
+/* #define TOUCH_HIST_LOW 70 */
 
 volatile bool b1 = 0;
 volatile bool b2 = 0;
@@ -22,7 +22,7 @@ volatile uint32_t b2a = 0;
 volatile int b1counter = 0;
 volatile int b2counter = 0;
 
-#define NUM_MODES_F 4
+#define NUM_MODES_F 1
 #define NUM_MODES_B 3
 int mode_f = 0;
 int mode_b = 0;
@@ -164,42 +164,23 @@ uint32_t WS2812BLEDCallback(int ledno) {
   return value;
 }
 
-static void read_touches(void) {
-  b1a = ReadTouchPin(GPIOC, 4, 2, TOUCH_ITERATIONS);
-  b2a = ReadTouchPin(GPIOA, 2, 0, TOUCH_ITERATIONS);
-  b1 = b1a > (b1 ? TOUCH_HIST_LOW : TOUCH_HIST_HIGH);
-  b2 = b2a > (b2 ? TOUCH_HIST_LOW : TOUCH_HIST_HIGH);
-}
+/* static void read_touches(void) { */
+/*   b1a = ReadTouchPin(GPIOC, 4, 2, TOUCH_ITERATIONS); */
+/*   b2a = ReadTouchPin(GPIOA, 2, 0, TOUCH_ITERATIONS); */
+/*   b1 = b1a > (b1 ? TOUCH_HIST_LOW : TOUCH_HIST_HIGH); */
+/*   b2 = b2a > (b2 ? TOUCH_HIST_LOW : TOUCH_HIST_HIGH); */
+/* } */
 
 int main(void) {
   SystemInit();
   RCC->APB2PCENR |= RCC_APB2Periph_GPIOD | RCC_APB2Periph_GPIOC |
                     RCC_APB2Periph_GPIOA | RCC_APB2Periph_ADC1;
 
-  InitTouchADC();
-
-  // Initialize rows
-  GPIOC->CFGLR &= ~(0xffff << (4 * 0));
-  GPIOC->CFGLR |= ((GPIO_Speed_10MHz | GPIO_CNF_OUT_PP_AF) << (4 * 0)) |
-                  ((GPIO_Speed_10MHz | GPIO_CNF_OUT_PP_AF) << (4 * 1)) |
-                  ((GPIO_Speed_10MHz | GPIO_CNF_OUT_PP_AF) << (4 * 2)) |
-                  ((GPIO_Speed_10MHz | GPIO_CNF_OUT_PP_AF) << (4 * 3));
-
-  // Initialize cols
-  GPIOC->CFGLR &= ~(0xf << (4 * 5)) & ~(0xf << (4 * 7));
-  GPIOC->CFGLR |= (GPIO_Speed_10MHz | GPIO_CNF_OUT_PP) << (4 * 5) |
-                  (GPIO_Speed_10MHz | GPIO_CNF_OUT_PP) << (4 * 7);
-  GPIOA->CFGLR &= ~(0xf << (4 * 1));
-  GPIOA->CFGLR |= (GPIO_Speed_10MHz | GPIO_CNF_OUT_PP) << (4 * 1);
-  GPIOD->CFGLR &= ~(0xf << (4 * 2));
-  GPIOD->CFGLR |= (GPIO_Speed_10MHz | GPIO_CNF_OUT_PP) << (4 * 2);
-
   WS2812BDMAInit();
   GPIOC->CFGLR |=
       GPIO_CNF_OUT_OD_AF
       << (4 * 6); // Fix WS2812 levels, needs 10K/1K pullup across Din and Vdd
   usb_setup();
-  timer_matrix_init();
   frameno = 0;
   int k;
   for (k = 0; k < NR_LEDS; k++)
@@ -207,7 +188,7 @@ int main(void) {
   int tweendir = 0;
   int ws2812counter = 0;
 
-  read_touches();
+  /* read_touches(); */
   if (b1 && b2) {
     lock_animations = true;
   } else if (b1) {
@@ -220,100 +201,27 @@ int main(void) {
 
   int num_x = 0;
 
-  uint8_t future_matrix[4][4] = {};
-
   while (1) {
 
     // switch between modes on the front side
     switch (mode_f) {
     case 0:
       // random led pulse inverted
-      if (ledcounter++ >= 40) {
-        if (num_x++ % 30 == 0)
-          future_matrix[rand8() & 0b11][(rand8() >> 2) & 0b11] = 0;
-        num_x %= 250;
-
-        for (int i = 0; i < 4; i++) {
-          for (int j = 0; j < 4; j++) {
-            if (future_matrix[i][j] < matrix_data[i][j]) {
-              matrix_data[i][j] -= 1;
-            } else if (future_matrix[i][j] > matrix_data[i][j]) {
-              matrix_data[i][j] += 1;
-            }
-            if (future_matrix[i][j] == matrix_data[i][j]) {
-              future_matrix[i][j] = 255;
-            }
-          }
-        }
-        ledcounter = 0;
+      for(int i=0; i<7; i++){
+        matrix_data[i][i] = 1;
       }
-
+      for(int i=1; i<8; i++){
+        matrix_data[7-i][i] = 1;
+      }
       break;
 
-    case 1:
-      // random led pulse
-      if (ledcounter++ >= 40) {
-        if (num_x++ % 30 == 0)
-          future_matrix[rand8() & 0b11][(rand8() >> 2) & 0b11] = 255;
-        num_x %= 250;
-
-        for (int i = 0; i < 4; i++) {
-          for (int j = 0; j < 4; j++) {
-            if (future_matrix[i][j] < matrix_data[i][j]) {
-              matrix_data[i][j] -= 1;
-            } else if (future_matrix[i][j] > matrix_data[i][j]) {
-              matrix_data[i][j] += 1;
-            }
-            if (future_matrix[i][j] == matrix_data[i][j]) {
-              future_matrix[i][j] = 0;
-            }
-          }
-        }
-        ledcounter = 0;
-      }
-
-      break;
-
-    case 2:
-      // snowfall
-      if (ledcounter++ >= 1024) {
-        memmove(&matrix_data[1][0], matrix_data,
-                3 * 4 * sizeof(matrix_data[0][0]));
-        for (int i = 0; i < 4; i++) {
-          matrix_data[0][i] = rand8() < 96 ? rand8() : 0;
-        }
-        ledcounter = 0;
-      }
-
-      break;
-
-    case 3:
-      // sparkle
-      if (ledcounter2++ >= 16) {
-        for (int i = 0; i < 4; i++) {
-          for (int j = 0; j < 4; j++) {
-            uint8_t cur = matrix_data[i][j];
-            matrix_data[i][j] = ((cur << 6) - cur) >> 6;
-          }
-        }
-        ledcounter2 = 0;
-      }
-      if (ledcounter++ >= 512) {
-        if (rand8() < 128) {
-          uint8_t rand = rand8();
-          matrix_data[rand & 0x3][(rand >> 2) & 0x3] = 255;
-        }
-        ledcounter = 0;
-      }
-
-      break;
     }
 
     output_matrix();
-    Delay_Us(300);
-    read_touches();
+    Delay_Us(1);
+    /* read_touches(); */
 
-    if (ws2812counter == 48) {
+    if (ws2812counter == 48+255) {
       if (!WS2812BLEDInUse) {
         if (b1) {
           if (!b1counter && !lock_animations)
