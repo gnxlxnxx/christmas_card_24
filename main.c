@@ -11,10 +11,6 @@
 #define WSGRB // For SK6805-EC15
 #define NR_LEDS 5
 
-/* #define TOUCH_ITERATIONS 3 */
-/* #define TOUCH_HIST_HIGH 80 */
-/* #define TOUCH_HIST_LOW 70 */
-
 volatile bool b1 = 0;
 volatile bool b2 = 0;
 volatile uint32_t b1a = 0;
@@ -33,7 +29,6 @@ int frameno;
 volatile int tween = -NR_LEDS;
 
 #define WS2812DMA_IMPLEMENTATION
-#include "ch32v003_touch_fix.h"
 #include "ws2812b_dma_spi_led_driver.h"
 
 #include "color_utilities.h"
@@ -61,13 +56,13 @@ uint8_t rand8(void) {
 }
 
 int ws2812_counter = 0;
-uint32_t snow_balls[6] = {0};
-uint32_t desired_output[6] = {0};
-uint32_t output[6] = {0};
+uint32_t snow_balls[6] = {0}; // TODO: Hardcoded LED count
+uint32_t desired_output[NR_LEDS] = {0};
+uint32_t output[NR_LEDS] = {0};
 uint8_t i = 0;
 
-const uint8_t led_angles[9] = {
-    0, 43, 85, 128, 171, 213}; // TODO: Investigate section type conflict
+const uint8_t led_angles[] = {
+    0, 51, 102, 154, 204};
 
 uint32_t WS2812BLEDCallback(int ledno) {
 
@@ -82,7 +77,7 @@ uint32_t WS2812BLEDCallback(int ledno) {
                             (huetable[(rs + 30) & 0xff] >> 2) |
                             ((huetable[(rs + 0)] >> 3) << 8);
     break;
-  case 1:
+  case 1: // TODO: Hardcoded LED count
     // "Snowball" mode
     if (ws2812_counter++ < 300) {
       desired_output[ledno] = snow_balls[ledno];
@@ -164,12 +159,12 @@ uint32_t WS2812BLEDCallback(int ledno) {
   return value;
 }
 
-/* static void read_touches(void) { */
-/*   b1a = ReadTouchPin(GPIOC, 4, 2, TOUCH_ITERATIONS); */
-/*   b2a = ReadTouchPin(GPIOA, 2, 0, TOUCH_ITERATIONS); */
-/*   b1 = b1a > (b1 ? TOUCH_HIST_LOW : TOUCH_HIST_HIGH); */
-/*   b2 = b2a > (b2 ? TOUCH_HIST_LOW : TOUCH_HIST_HIGH); */
-/* } */
+static void read_touches(void) {
+  b1a = 0;
+  b2a = 0;
+  b1 = 0;
+  b2 = 0;
+}
 
 int main(void) {
   SystemInit();
@@ -218,19 +213,19 @@ int main(void) {
     }
 
     output_matrix();
-    Delay_Us(1);
-    /* read_touches(); */
+    Delay_Us(300);
+    read_touches();
 
     if (ws2812counter == 48+255) {
       if (!WS2812BLEDInUse) {
         if (b1) {
           if (!b1counter && !lock_animations)
-            mode_f = ++mode_f % NUM_MODES_F;
+            mode_f = (mode_f + 1) % NUM_MODES_F;
           b1counter = 128;
         }
         if (b2) {
           if (!b2counter && !lock_animations)
-            mode_b = ++mode_b % NUM_MODES_B;
+            mode_b = (mode_b + 1) % NUM_MODES_B;
           b2counter = 128;
         }
         if (b1counter) {
