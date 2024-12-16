@@ -38,7 +38,7 @@ static const kc_element url_kcstr[] = {
   {0, HID_KEY_A}, {0, HID_KEY_R}, {0, HID_KEY_D}, {0, HID_KEY_ENTER}, {-1, -1}
 }; // DE layout
 
-static const kbd_op kbd_op_initial[2] = {KBD_OP_BTN}; //TODO: Investigate section type conflict
+static const kbd_op kbd_op_initial[] = {KBD_OP_BTN};
 static const kbd_op kbd_ops_url[] = {
   {KBD_OP_SLEEP, {.op_sleep_ticks = Ticks_from_Ms(2000)}},
   {KBD_OP_KEY, {.op_key_kc = {0, 0xf0}}},
@@ -120,7 +120,11 @@ void usb_handle_user_in_request(struct usb_endpoint *e, uint8_t *scratchpad,
     int i = 0;
     hid_keyboard_report_t report = {};
     const kbd_op *op = kbd_state.op;
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdiscarded-qualifiers"
     struct kbd_op_str_state *op_str_state = &kbd_state.state.op_str;
+#pragma GCC diagnostic pop
 
     switch (op->type) {
       case KBD_OP_SLEEP:
