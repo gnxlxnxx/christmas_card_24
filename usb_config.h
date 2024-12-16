@@ -4,10 +4,10 @@
 //Defines the number of endpoints for this device. (Always add one for EP0). For two EPs, this should be 3.
 #define ENDPOINTS 3
 
-#define USB_DM 4
-#define USB_DP 3
-#define USB_DPU 5
-#define USB_PORT D
+#define USB_PORT D     // [A,C,D] GPIO Port to use with D+, D- and DPU
+#define USB_PIN_DP 3   // [0-4] GPIO Number for USB D+ Pin
+#define USB_PIN_DM 4   // [0-4] GPIO Number for USB D- Pin
+#define USB_PIN_DPU 5  // [0-7] GPIO for feeding the 1.5k Pull-Up on USB D- Pin; Comment out if not used / tied to 3V3!
 
 #define RV003USB_OPTIMIZE_FLASH 1
 #define RV003USB_EVENT_DEBUGGING 0
@@ -125,7 +125,7 @@ static const uint8_t config_descriptor[] = {  //Mostly stolen from a USB mouse I
 	1,					// bNumEndpoints
 	0x03,					// bInterfaceClass (0x03 = HID)
 	0x00,					// bInterfaceSubClass
-	0x00,					// bInterfaceProtocol (Mouse)
+	0x00,					// bInterfaceProtocol
 	0,					// iInterface
 
 	9,					// bLength
@@ -172,7 +172,7 @@ static const uint8_t config_descriptor[] = {  //Mostly stolen from a USB mouse I
 };
 
 #define STR_MANUFACTURER u"Fachschaft Elektro- und Informationstechnik"
-#define STR_PRODUCT      u"Weihnachtskarte 2023"
+#define STR_PRODUCT      u"Weihnachtskarte 2024"
 #define STR_SERIAL       u"000"
 
 struct usb_string_descriptor_struct {
