@@ -6,6 +6,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
+#include "letters.h"
 
 #define WS2812DMA_IMPLEMENTATION
 #define WSGRB // For SK6805-EC15
@@ -192,7 +193,9 @@ int main(void) {
     open_url_windows();
   }
 
-  int ledcounter = 0, ledcounter2 = 0;
+  int ledcounter = 0;
+  char* message = "Frohe Weihnachten wuenscht die FS-EI!";
+  int lettercounter = 0;
 
   int num_x = 0;
 
@@ -201,12 +204,16 @@ int main(void) {
     // switch between modes on the front side
     switch (mode_f) {
     case 0:
-      // random led pulse inverted
-      for(int i=0; i<7; i++){
-        matrix_data[i][i] = 1;
-      }
-      for(int i=1; i<8; i++){
-        matrix_data[7-i][i] = 1;
+      if(ledcounter != 0){
+        ledcounter--;
+      } else {
+        for(int row = 0; row < 7 ; row++ ){
+          for(int col = 0; col < 8; col++){
+            matrix_data[row][col] = get_scrolled_letter(message, lettercounter, row, col);
+          }
+        }
+        lettercounter = (lettercounter+1)%(5*36);
+        ledcounter = 1000;
       }
       break;
 

@@ -20,7 +20,7 @@ uint8_t matrix_data[7][8] = {
   {0, 0, 0, 0, 0, 0, 0, 0},
 };
 uint8_t col = 0;
-/* uint8_t brightness_index = 10; */
+uint8_t brightness_index = 2;
 
 struct Pin{
   GPIO_TypeDef* base_addr;
@@ -57,7 +57,7 @@ void output_matrix() {
     if(data_row > 6){
         data_row -= 7;
     }
-    if(matrix_data[data_row][col] != 0) {
+    if(matrix_data[data_row][col] > brightness_index) {
       // set pin high
       pins[(col + 1 + row) % 8].base_addr -> CFGLR &= ~(0b1111<<(4*pins[(col + 1 + row) % 8].offset));
       pins[(col + 1 + row) % 8].base_addr -> CFGLR |=  (GPIO_Speed_10MHz | GPIO_CNF_OUT_PP) << (4*pins[(col + 1 + row) % 8].offset);
@@ -79,11 +79,11 @@ void output_matrix() {
   /* pins[col].base_addr -> CFGLR |=  (0b0001<<(4*pins[col].offset)); */
   pins[col].base_addr -> BSHR  |=  (0b1<<(pins[col].offset+16));
 
-  /* if(col == 0){ */
-  /*   if(brightness_index != 0){ */
-  /*     brightness_index--; */
-  /*   } else { */
-  /*     brightness_index = 10; */
-  /*   } */
-  /* } */
+  if(col == 0){
+    if(brightness_index != 0){
+      brightness_index--;
+    } else {
+      brightness_index = 2;
+    }
+  }
 }
