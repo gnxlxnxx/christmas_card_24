@@ -23,7 +23,7 @@ static enum ws2812_modes {
 } mode;
 
 static int ws2812_counter = 0;
-static uint32_t snow_balls[6] = {0}; // TODO: Hardcoded LED count
+static uint32_t snow_balls[NR_LEDS] = {0}; // TODO: Hardcoded LED count
 static uint32_t desired_output[NR_LEDS] = {0};
 static uint32_t output[NR_LEDS] = {0};
 
@@ -46,20 +46,19 @@ uint32_t WS2812BLEDCallback(int ledno) {
                             (huetable[(rs + 30) & 0xff] >> 2) |
                             ((huetable[(rs + 0)] >> 3) << 8);
     break;
-  case MODE_SNOWBALL: // TODO: Hardcoded LED count
+  case MODE_SNOWBALL:
     // "Snowball" mode
     if (ws2812_counter++ < 300) {
       desired_output[ledno] = snow_balls[ledno];
     } else {
       int num_snowballs_l = 0;
-      for (int i = 4; i <= 6; i++)
-        num_snowballs_l += !!snow_balls[i % 6];
+      for (int i = 2; i < 5; i++)
+        num_snowballs_l += (snow_balls[i] != 0);
       int num_snowballs_r = 0;
-      for (int i = 1; i <= 3; i++)
-        num_snowballs_r += !!snow_balls[i % 6];
+      for (int i = 0; i < 2; i++)
+        num_snowballs_r += (snow_balls[i] != 0);
       uint8_t hue = rand8();
-      snow_balls[3] = snow_balls[2];
-      snow_balls[2] = snow_balls[1];
+      snow_balls[0] = snow_balls[1];
       snow_balls[1] = rand8() % (3 + num_snowballs_r)
                           ? 0
                           : (huetable[(hue + 170) & 0xff] << 16) |
@@ -67,9 +66,9 @@ uint32_t WS2812BLEDCallback(int ledno) {
                                 (huetable[(hue + 0)] << 8);
 
       hue = rand8();
-      snow_balls[4] = snow_balls[5];
-      snow_balls[5] = snow_balls[0];
-      snow_balls[0] = rand8() % (3 + num_snowballs_l)
+      snow_balls[4] = snow_balls[3];
+      snow_balls[3] = snow_balls[2];
+      snow_balls[2] = rand8() % (3 + num_snowballs_l)
                           ? 0
                           : (huetable[(hue + 170) & 0xff] << 16) |
                                 huetable[(hue + 85) & 0xff] |
@@ -105,10 +104,10 @@ uint32_t WS2812BLEDCallback(int ledno) {
   if (b1counter) {
     switch (ledno) {
     case 4:
-    case 0:
+    case 2:
       value |= (b1counter >> 3) << 16;
       break;
-    case 5:
+    case 3:
       value |= b1counter << 16;
       break;
     }
@@ -116,11 +115,11 @@ uint32_t WS2812BLEDCallback(int ledno) {
 
   if (b2counter) {
     switch (ledno) {
-    case 1:
-    case 3:
+    case 0:
+    case 2:
       value |= (b2counter >> 3) << 16;
       break;
-    case 2:
+    case 1:
       value |= b2counter << 16;
       break;
     }
