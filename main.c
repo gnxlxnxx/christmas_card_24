@@ -36,6 +36,9 @@ int main(void) {
       if (btn_left && btn_left_toggled) {
         ws2812_next_mode();
       }
+      if (btn_right && btn_right_toggled) {
+        matrix_next_mode();
+      }
     }
 
     while (SysTick->CNT - start < Ticks_from_Us(300)) {}

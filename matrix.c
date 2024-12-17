@@ -1,5 +1,6 @@
 #include "matrix.h"
 #include "ch32v003fun.h"
+#include "random.h"
 #include "letters.h"
 #include <string.h>
 
@@ -12,15 +13,7 @@
 /// LED7:   PC0
 /// LED8:   PA1
 
-uint8_t matrix_data[7][8] = {
-  {0, 0, 0, 0, 0, 0, 0, 0},
-  {0, 0, 0, 0, 0, 0, 0, 0},
-  {0, 0, 0, 0, 0, 0, 0, 0},
-  {0, 0, 0, 0, 0, 0, 0, 0},
-  {0, 0, 0, 0, 0, 0, 0, 0},
-  {0, 0, 0, 0, 0, 0, 0, 0},
-  {0, 0, 0, 0, 0, 0, 0, 0},
-};
+uint8_t matrix_data[7][8] = {0};
 uint8_t col = 0;
 uint8_t brightness_index = 2;
 
@@ -92,12 +85,15 @@ void output_matrix() {
 
 static enum matrix_modes {
   MODE_MERRY_CHRISTMAS,
+  MODE_SNOWFALL,
   MODE_END
 } mode;
 
-int matrix_counter = 0;
+uint32_t matrix_counter = 0;
 int letter_counter = 0;
 const char* merry_christmas = "Frohe Weihnachten-wuenscht die FS-EI!";
+
+uint8_t buffer_matrix[7][8] = {0};
 
 void matrix_update(){
   switch(mode) {
@@ -114,10 +110,44 @@ void matrix_update(){
         matrix_counter = 0;
       }
       break;
+    case MODE_SNOWFALL:
+      if(matrix_counter < 1000){
+        matrix_counter++;
+      } else {
+        int sum = 0;
+        for(int col = 0; col < 8; col++){
+          matrix_data[6][col] |= matrix_data[5][col];
+          sum += matrix_data[6][col];
+        }
+        if(sum == 8){
+          for(int col = 0; col < 8; col++){
+            matrix_data[6][col] = 0;
+          }
+        }
+        for(int row = 5; row > 0; row--){
+          for(int col = 0; col < 8; col++){
+            matrix_data[row][col] = matrix_data[row-1][col];
+          }
+        }
+        for(int col = 0; col < 8; col++){
+          matrix_data[0][col] = (rand8() > 250)?1:0;
+        }
+        matrix_counter = 0;
+      }
+
+      break;
   }
   output_matrix();
 }
 
 void matrix_next_mode(void) {
-  mode = mode + 1 % MODE_END;
+  mode = (mode + 1) % MODE_END;
+
+  for(int row = 0; row < 7; row++){
+    for(int col = 0; col < 8; col++){
+      matrix_data[row][col] = 0;
+    }
+  }
+  letter_counter = 0;
+  matrix_counter = 0;
 }
