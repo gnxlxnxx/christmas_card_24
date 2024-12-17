@@ -8,7 +8,7 @@
 
 #define NUM_MODES_F 1
 int mode_f = 0;
-bool lock_animations = false;
+static bool lock_animations = false;
 
 int main(void) {
   SystemInit();
@@ -18,16 +18,20 @@ int main(void) {
   ws2812_init();
   usb_init();
 
-  if (but_left && but_right) {
+  touch_init();
+  if (btn_left && btn_right) {
     lock_animations = true;
-  } else if (but_left) {
-    open_url();
-  } else if (but_right) {
+  } else if (btn_left) {
     open_url_windows();
+  } else if (btn_right) {
+    open_url();
   }
 
-  while (1) {
-    touch_update();
+  while (true) {
+    uint32_t start = SysTick->CNT;
+
+    output_matrix();
+    ws2812_update();
 
     // switch between modes on the front side
     /*switch (mode_f) {*/
@@ -43,9 +47,14 @@ int main(void) {
     /**/
     /*}*/
 
-    output_matrix();
-    Delay_Us(300);
+    touch_update();
 
-    ws2812_update();
+    if (!lock_animations) {
+      if (btn_left && btn_left_toggled) {
+        ws2812_next_mode();
+      }
+    }
+
+    while (SysTick->CNT - start < Ticks_from_Us(300)) {}
   }
 }

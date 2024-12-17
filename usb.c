@@ -91,20 +91,18 @@ void usb_handle_user_in_request(struct usb_endpoint *e, uint8_t *scratchpad,
     // Gamepad (2 bytes)
     int8_t report[2] = {0};
 
-    if (but_left || but_right) {
-      int shift_val = (but_left && but_right) ? 4 : 6;
-      int x = (but_left_analog >> shift_val) - (but_right_analog >> shift_val);
+    int shift_val = (btn_left && btn_right) ? 4 : 5;
+    int x = (btn_right_analog >> shift_val) - (btn_left_analog >> shift_val);
 
-      if (x > INT8_MAX) {
-        report[0] = INT8_MAX;
-      } else if (x <= INT8_MIN) {
-        report[0] = INT8_MIN + 1;
-      } else {
-        report[0] = x;
-      }
+    if (x > INT8_MAX) {
+      report[0] = INT8_MAX;
+    } else if (x <= INT8_MIN) {
+      report[0] = INT8_MIN + 1;
+    } else {
+      report[0] = x;
     }
 
-    report[1] = but_right | (but_left << 1);
+    report[1] = btn_left | (btn_right << 1);
 
     usb_send_data(report, sizeof(report), 0, sendtok);
   } else if (endp == 2) {
@@ -147,10 +145,10 @@ void usb_handle_user_in_request(struct usb_endpoint *e, uint8_t *scratchpad,
         }
         break;
       case KBD_OP_BTN:
-        if (but_left) {
+        if (btn_left) {
           report.keycode[i++] = HID_KEY_ARROW_LEFT;
         }
-        if (but_right) {
+        if (btn_right) {
           report.keycode[i++] = HID_KEY_ARROW_RIGHT;
         }
         break;

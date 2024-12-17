@@ -13,11 +13,14 @@ static int frameno = 0;
 volatile static int tween = -NR_LEDS;
 
 #include "ws2812b_dma_spi_led_driver.h"
-
 #include "color_utilities.h"
 
-#define NUM_MODES_B 3
-static int mode_b = 0;
+static enum ws2812_modes {
+  MODE_FIRE,
+  MODE_SNOWBALL,
+  MODE_HUEWHEEL,
+  MODE_END
+} mode;
 
 static int ws2812_counter = 0;
 static uint32_t snow_balls[6] = {0}; // TODO: Hardcoded LED count
@@ -33,8 +36,8 @@ static const uint8_t led_angles[] = {
 uint32_t WS2812BLEDCallback(int ledno) {
 
   // switch between modes on the back side
-  switch (mode_b) {
-  case 0:
+  switch (mode) {
+  case MODE_FIRE:
     // Original "Fire" mode
     uint8_t index = (phases[ledno]) >> 8;
     uint8_t rsbase = sintable[index];
@@ -43,7 +46,7 @@ uint32_t WS2812BLEDCallback(int ledno) {
                             (huetable[(rs + 30) & 0xff] >> 2) |
                             ((huetable[(rs + 0)] >> 3) << 8);
     break;
-  case 1: // TODO: Hardcoded LED count
+  case MODE_SNOWBALL: // TODO: Hardcoded LED count
     // "Snowball" mode
     if (ws2812_counter++ < 300) {
       desired_output[ledno] = snow_balls[ledno];
@@ -75,7 +78,7 @@ uint32_t WS2812BLEDCallback(int ledno) {
       ws2812_counter = 0;
     }
     break;
-  case 2:
+  case MODE_HUEWHEEL:
     // "Huewheel" mode
     uint8_t ang = (ws2812_counter >> 3) + led_angles[ledno];
     desired_output[ledno] = huetable[(ang + 170) & 0xff] << 16 |
@@ -85,6 +88,7 @@ uint32_t WS2812BLEDCallback(int ledno) {
       ws2812_counter = (ws2812_counter + 1) & 0x7ff;
     }
     break;
+  default:
   }
 
   for (int i = 0; i < 3; i++) {
@@ -141,10 +145,10 @@ void ws2812_update(void) {
 
   if (ws2812counter == 48) {
     if (!WS2812BLEDInUse) {
-      if (but_left) {
+      if (btn_right) {
         b1counter = 128;
       }
-      if (but_right) {
+      if (btn_left) {
         b2counter = 128;
       }
       if (b1counter) {
@@ -184,4 +188,8 @@ void ws2812_update(void) {
   } else {
     ws2812counter++;
   }
+}
+
+void ws2812_next_mode(void) {
+  mode = (mode + 1) % MODE_END;
 }
