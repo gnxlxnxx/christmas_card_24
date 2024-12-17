@@ -1,5 +1,7 @@
 #include "matrix.h"
 #include "ch32v003fun.h"
+#include "letters.h"
+#include <string.h>
 
 /// LED1:   PD2
 /// LED2:   PC7
@@ -86,4 +88,36 @@ void output_matrix() {
       brightness_index = 2;
     }
   }
+}
+
+static enum matrix_modes {
+  MODE_MERRY_CHRISTMAS,
+  MODE_END
+} mode;
+
+int matrix_counter = 0;
+int letter_counter = 0;
+const char* merry_christmas = "Frohe Weihnachten-wuenscht die FS-EI!";
+
+void matrix_update(){
+  switch(mode) {
+    case MODE_MERRY_CHRISTMAS:
+      if(matrix_counter < 1000){
+        matrix_counter++;
+      } else {
+        for(int row = 0; row < 7; row++){
+          for(int col = 0; col < 8; col++){
+            matrix_data[row][col] = get_scrolled_letter(merry_christmas, letter_counter, row, col);
+          }
+        }
+        letter_counter = (letter_counter+1)%(36*5);
+        matrix_counter = 0;
+      }
+      break;
+  }
+  output_matrix();
+}
+
+void matrix_next_mode(void) {
+  mode = mode + 1 % MODE_END;
 }

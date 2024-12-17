@@ -798,6 +798,7 @@ uint8_t get_letter(char letter, int row, int col){
     case '-':
       return letter_DASH[row][col];
     case ' ':
+    default:
       return letter_SPACE[row][col];
   }
 }

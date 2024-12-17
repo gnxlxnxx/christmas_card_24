@@ -6,8 +6,6 @@
 #include "ws2812.h"
 #include "touch.h"
 
-#define NUM_MODES_F 1
-int mode_f = 0;
 static bool lock_animations = false;
 
 int main(void) {
@@ -30,23 +28,8 @@ int main(void) {
   while (true) {
     uint32_t start = SysTick->CNT;
 
-    output_matrix();
+    matrix_update();
     ws2812_update();
-
-    // switch between modes on the front side
-    /*switch (mode_f) {*/
-    /*case 0:*/
-    /*  // random led pulse inverted*/
-    /*  for(int i=0; i<7; i++){*/
-    /*    matrix_data[i][i] = 1;*/
-    /*  }*/
-    /*  for(int i=1; i<8; i++){*/
-    /*    matrix_data[7-i][i] = 1;*/
-    /*  }*/
-    /*  break;*/
-    /**/
-    /*}*/
-
     touch_update();
 
     if (!lock_animations) {
