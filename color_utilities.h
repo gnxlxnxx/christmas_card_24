@@ -7,6 +7,8 @@
 #ifndef _COLOR_UTILITIES_H
 #define _COLOR_UTILITIES_H
 
+#include <stdint.h>
+
 // To stop warnings about unused functions.
 static uint32_t EHSVtoHEX( uint8_t hue, uint8_t sat, uint8_t val ) __attribute__((used));
 static uint32_t TweenHexColors( uint32_t hexa, uint32_t hexb, int tween ) __attribute__((used));
