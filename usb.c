@@ -1,10 +1,10 @@
-#include <stdint.h>
-#include <tinyusb_hid.h>
-#include <stddef.h>
 #include <ch32v003fun.h>
 #include <rv003usb.h>
+#include <tinyusb_hid.h>
+#include <stdint.h>
+#include <stddef.h>
 #include "usb.h"
-#include "main.h"
+#include "touch.h"
 
 typedef struct {
   uint8_t modifier;
@@ -54,7 +54,7 @@ static const kbd_op kbd_ops_url_win[] = {
   {KBD_OP_BTN}
 };
 
-volatile static struct kbd_state {
+static volatile struct kbd_state {
   const kbd_op *op;
   union kbd_op_state {
     struct kbd_op_str_state {
@@ -84,14 +84,6 @@ static void kbd_goto(const kbd_op *op) {
   kbd_state.op = op;
 }
 
-void open_url(void) {
-  kbd_goto(kbd_ops_url);
-}
-
-void open_url_windows(void) {
-  kbd_goto(kbd_ops_url_win);
-}
-
 void usb_handle_user_in_request(struct usb_endpoint *e, uint8_t *scratchpad,
                                 int endp, uint32_t sendtok,
                                 struct rv003usb_internal *ist) {
@@ -99,20 +91,18 @@ void usb_handle_user_in_request(struct usb_endpoint *e, uint8_t *scratchpad,
     // Gamepad (2 bytes)
     int8_t report[2] = {0};
 
-    if (b1 || b2) {
-      int shift_val = (b1 && b2) ? 4 : 6;
-      int x = (b1a >> shift_val) - (b2a >> shift_val);
+    int shift_val = (btn_left && btn_right) ? 4 : 5;
+    int x = (btn_right_analog >> shift_val) - (btn_left_analog >> shift_val);
 
-      if (x > INT8_MAX) {
-        report[0] = INT8_MAX;
-      } else if (x <= INT8_MIN) {
-        report[0] = INT8_MIN + 1;
-      } else {
-        report[0] = x;
-      }
+    if (x > INT8_MAX) {
+      report[0] = INT8_MAX;
+    } else if (x <= INT8_MIN) {
+      report[0] = INT8_MIN + 1;
+    } else {
+      report[0] = x;
     }
 
-    report[1] = b2 | (b1 << 1);
+    report[1] = btn_left | (btn_right << 1);
 
     usb_send_data(report, sizeof(report), 0, sendtok);
   } else if (endp == 2) {
@@ -155,10 +145,10 @@ void usb_handle_user_in_request(struct usb_endpoint *e, uint8_t *scratchpad,
         }
         break;
       case KBD_OP_BTN:
-        if (b2) {
+        if (btn_left) {
           report.keycode[i++] = HID_KEY_ARROW_LEFT;
         }
-        if (b1) {
+        if (btn_right) {
           report.keycode[i++] = HID_KEY_ARROW_RIGHT;
         }
         break;
@@ -169,4 +159,16 @@ void usb_handle_user_in_request(struct usb_endpoint *e, uint8_t *scratchpad,
     // If it's a control transfer, empty it.
     usb_send_empty(sendtok);
   }
+}
+
+void open_url(void) {
+  kbd_goto(kbd_ops_url);
+}
+
+void open_url_windows(void) {
+  kbd_goto(kbd_ops_url_win);
+}
+
+void usb_init(void) {
+  usb_setup();
 }
