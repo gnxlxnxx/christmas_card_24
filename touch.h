@@ -9,6 +9,6 @@ extern uint16_t but_right_analog;
 extern bool but_left;
 extern bool but_right;
 
-void measure_touch(void);
+void touch_update(void);
 
 #endif

@@ -2,6 +2,6 @@
 #define WS2812_H_
 
 void ws2812_init(void);
-void update_ws2812(void);
+void ws2812_update(void);
 
 #endif

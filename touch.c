@@ -24,7 +24,7 @@ bool but_right = false;
 static uint8_t but_left_tcount = 0;
 static uint8_t but_right_tcount = 0;
 
-void measure_touch(void) {
+void touch_update(void) {
   // Set output high
   BUT_LEFT_PORT->OUTDR |= 1<<BUT_LEFT_PIN;
   BUT_LEFT_PORT->CFGLR = (BUT_LEFT_PORT->CFGLR & ~(0xf<<(4*BUT_LEFT_PIN)))

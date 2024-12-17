@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include "random.h"
 
 /* White Noise Generator State */
 #define NOISE_BITS 8

@@ -17,7 +17,6 @@ int main(void) {
 
   ws2812_init();
   usb_init();
-  touch_init();
 
   if (but_left && but_right) {
     lock_animations = true;
@@ -28,7 +27,7 @@ int main(void) {
   }
 
   while (1) {
-    measure_touch();
+    touch_update();
 
     // switch between modes on the front side
     /*switch (mode_f) {*/

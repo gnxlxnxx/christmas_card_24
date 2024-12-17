@@ -1,10 +1,9 @@
-#include <stdint.h>
-#include <tinyusb_hid.h>
-#include <stddef.h>
 #include <ch32v003fun.h>
 #include <rv003usb.h>
+#include <tinyusb_hid.h>
+#include <stdint.h>
+#include <stddef.h>
 #include "usb.h"
-#include "main.h"
 #include "touch.h"
 
 typedef struct {
@@ -55,7 +54,7 @@ static const kbd_op kbd_ops_url_win[] = {
   {KBD_OP_BTN}
 };
 
-volatile static struct kbd_state {
+static volatile struct kbd_state {
   const kbd_op *op;
   union kbd_op_state {
     struct kbd_op_str_state {
@@ -83,14 +82,6 @@ static void kbd_goto(const kbd_op *op) {
   }
 
   kbd_state.op = op;
-}
-
-void open_url(void) {
-  kbd_goto(kbd_ops_url);
-}
-
-void open_url_windows(void) {
-  kbd_goto(kbd_ops_url_win);
 }
 
 void usb_handle_user_in_request(struct usb_endpoint *e, uint8_t *scratchpad,
@@ -170,6 +161,14 @@ void usb_handle_user_in_request(struct usb_endpoint *e, uint8_t *scratchpad,
     // If it's a control transfer, empty it.
     usb_send_empty(sendtok);
   }
+}
+
+void open_url(void) {
+  kbd_goto(kbd_ops_url);
+}
+
+void open_url_windows(void) {
+  kbd_goto(kbd_ops_url_win);
 }
 
 void usb_init(void) {

@@ -1,5 +1,6 @@
 #include <ch32v003fun.h>
 #include <stdint.h>
+#include "touch.h"
 #include "random.h"
 #include "touch.h"
 
