@@ -5,6 +5,7 @@
 #include <rv003usb.h>
 #include "usb.h"
 #include "main.h"
+#include "touch.h"
 
 typedef struct {
   uint8_t modifier;
@@ -99,9 +100,9 @@ void usb_handle_user_in_request(struct usb_endpoint *e, uint8_t *scratchpad,
     // Gamepad (2 bytes)
     int8_t report[2] = {0};
 
-    if (b1 || b2) {
-      int shift_val = (b1 && b2) ? 4 : 6;
-      int x = (b1a >> shift_val) - (b2a >> shift_val);
+    if (but_left || but_right) {
+      int shift_val = (but_left && but_right) ? 4 : 6;
+      int x = (but_left_analog >> shift_val) - (but_right_analog >> shift_val);
 
       if (x > INT8_MAX) {
         report[0] = INT8_MAX;
@@ -112,7 +113,7 @@ void usb_handle_user_in_request(struct usb_endpoint *e, uint8_t *scratchpad,
       }
     }
 
-    report[1] = b2 | (b1 << 1);
+    report[1] = but_right | (but_left << 1);
 
     usb_send_data(report, sizeof(report), 0, sendtok);
   } else if (endp == 2) {
@@ -155,10 +156,10 @@ void usb_handle_user_in_request(struct usb_endpoint *e, uint8_t *scratchpad,
         }
         break;
       case KBD_OP_BTN:
-        if (b2) {
+        if (but_right) {
           report.keycode[i++] = HID_KEY_ARROW_LEFT;
         }
-        if (b1) {
+        if (but_left) {
           report.keycode[i++] = HID_KEY_ARROW_RIGHT;
         }
         break;

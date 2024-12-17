@@ -11,7 +11,6 @@ static uint16_t phases[NR_LEDS];
 static int frameno = 0;
 volatile static int tween = -NR_LEDS;
 
-#define WS2812DMA_IMPLEMENTATION
 #include "ws2812b_dma_spi_led_driver.h"
 
 #include "color_utilities.h"
@@ -21,8 +20,8 @@ static int mode_b = 0;
 
 static int ws2812_counter = 0;
 static uint32_t snow_balls[6] = {0}; // TODO: Hardcoded LED count
-static uint32_t desired_output[6] = {0};
-static uint32_t output[6] = {0};
+static uint32_t desired_output[NR_LEDS] = {0};
+static uint32_t output[NR_LEDS] = {0};
 
 volatile static int b1counter = 0;
 volatile static int b2counter = 0;
