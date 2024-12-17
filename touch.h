@@ -4,12 +4,11 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-extern uint32_t but_left_analog;
-extern uint32_t but_right_analog;
+extern uint16_t but_left_analog;
+extern uint16_t but_right_analog;
 extern bool but_left;
 extern bool but_right;
 
-extern void touch_init(void);
-extern void touch_loop(void);
+void measure_touch(void);
 
 #endif

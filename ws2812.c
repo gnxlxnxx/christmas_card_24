@@ -23,8 +23,8 @@ static uint32_t snow_balls[6] = {0}; // TODO: Hardcoded LED count
 static uint32_t desired_output[NR_LEDS] = {0};
 static uint32_t output[NR_LEDS] = {0};
 
-volatile static int b1counter = 0;
-volatile static int b2counter = 0;
+static volatile int b1counter = 0;
+static volatile int b2counter = 0;
 
 static const uint8_t led_angles[] = {
     0, 51, 102, 154, 204};
@@ -134,7 +134,7 @@ void ws2812_init(void) {
     phases[k] = k << 8;
 }
 
-void ws2812_loop(void) {
+void ws2812_update(void) {
   static int tweendir = 0;
   static int ws2812counter = 0;
 
@@ -144,8 +144,6 @@ void ws2812_loop(void) {
         b1counter = 128;
       }
       if (but_right) {
-        if (!b2counter)
-          mode_b = (mode_b + 1) % NUM_MODES_B;
         b2counter = 128;
       }
       if (b1counter) {

@@ -156,10 +156,10 @@ void usb_handle_user_in_request(struct usb_endpoint *e, uint8_t *scratchpad,
         }
         break;
       case KBD_OP_BTN:
-        if (but_right) {
+        if (but_left) {
           report.keycode[i++] = HID_KEY_ARROW_LEFT;
         }
-        if (but_left) {
+        if (but_right) {
           report.keycode[i++] = HID_KEY_ARROW_RIGHT;
         }
         break;
@@ -170,4 +170,8 @@ void usb_handle_user_in_request(struct usb_endpoint *e, uint8_t *scratchpad,
     // If it's a control transfer, empty it.
     usb_send_empty(sendtok);
   }
+}
+
+void usb_init(void) {
+  usb_setup();
 }

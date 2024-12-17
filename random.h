@@ -3,6 +3,6 @@
 
 #include <stdint.h>
 
-extern uint8_t rand8(void);
+uint8_t rand8(void);
 
 #endif
