@@ -79,8 +79,8 @@ static void attach_group(uint8_t group, uint8_t row) {
 static enum matrix_modes {
   MODE_MERRY_CHRISTMAS,
   MODE_SNOWFALL,
-  MODE_SPARKLE,
   MODE_RANDOM_PULSE,
+  MODE_SPARKLE,
   MODE_END,
   MODE_RANDOM_PULSE_INVERTED,
 } mode;
@@ -210,7 +210,11 @@ void matrix_update(void) {
           }
         }
         for(int col = 0; col < MATRIX_WIDTH; col++){
-          matrix_data[0][col] = (rand8() > 240)?gamma_lut[150]:0;
+          if(matrix_data[1][col] == 0){
+            matrix_data[0][col] = (rand8() > 240)?gamma_lut[150]:0;
+          } else {
+            matrix_data[0][col] = 0;
+          }
         }
         matrix_counter = 0;
       }
