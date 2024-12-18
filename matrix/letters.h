@@ -726,14 +726,57 @@ static const int8_t letter_ue[] = {
   -1
 };
 
+static const int8_t letter_oe[] = {
+  0b0111001,
+  0b1000100,
+  0b1000100,
+  0b0111001,
+  -1
+};
+
+static const int8_t letter_ae[] = {
+  0b0100001,
+  0b1010100,
+  0b1010100,
+  0b1111001,
+  -1
+};
+
+static const int8_t letter_sz[] = {
+  0b1111110,
+  0b0000001,
+  0b0000101,
+  0b1001010,
+  0b0110000,
+};
+
+static const int8_t letter_uni_stuttgart[] = {
+  0b0001000,
+  0b0100010,
+  0b0001000,
+  0b0100010,
+  0b0001000,
+};
+
 static const int8_t *get_letter(char c) {
   if (' ' <= c && c <= '~') {
     return ascii_printable[c - ' '];
   }
 
   switch (c) {
+    case 'Ü':
     case 'ü':
       return letter_ue;
+    case 'Ö':
+    case 'ö':
+      return letter_oe;
+    case 'Ä':
+    case 'ä':
+      return letter_ae;
+    case 'ß':
+      return letter_sz;
+    case '\x80':
+      return letter_uni_stuttgart;
     default:
       return letter_unknown;
   }
