@@ -183,7 +183,11 @@ void matrix_update(void) {
             matrix_data[row][col] = gamma_lut[150*get_scrolled_letter(merry_christmas, letter_counter, row, col)];
           }
         }
-        letter_counter = (letter_counter+1)%(36*5);
+        letter_offset_counter += 1;
+        if(letter_offset_counter == 6){
+          letter_counter = (letter_counter+1)%((strlen(merry_christmas)-1));
+          letter_offset_counter = 0;
+        }
         matrix_counter = 0;
       }
       break;

@@ -803,16 +803,17 @@ uint8_t get_letter(char letter, int row, int col){
   }
 }
 
-/// ("ABC", 2)
+int letter_offset_counter = 0;
+
 uint32_t get_scrolled_letter(char* message, int counter, int row, int col){
-  int offset = counter%5;
+  int offset = letter_offset_counter;
   uint8_t pixel = 0;
   if(col < 5-offset){
-    pixel = get_letter(message[counter/5], row, col+offset);
+    pixel = get_letter(message[counter], row, col+offset);
   } else if (col == 5-offset) {
-  } else if (col == 11-offset) {
+  } else if (col == 11-offset || col == 12-offset) {
   } else {
-    pixel = get_letter(message[1+(counter/5)], row, col-(6-offset));
+    pixel = get_letter(message[1+(counter)], row, col-(6-offset));
   }
   return pixel;
 }
