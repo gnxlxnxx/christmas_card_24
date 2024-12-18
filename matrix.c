@@ -1,16 +1,7 @@
 #include <ch32v003fun.h>
 #include <stdint.h>
 #include "matrix.h"
-
-#define MATRIX_WIDTH 8
-#define MATRIX_HEIGHT 7
-
-#define ROWCOUNT (MATRIX_WIDTH)
-#define GROUPCOUNT 2
-
-#define PWM_MAX 1023
-
-#define ROW_PWM_CNF (GPIO_Speed_10MHz | GPIO_CNF_OUT_OD_AF)
+#include "gamma_lut.h"
 
 /// LED1:   PD2 *
 /// LED2:   PC7 *
@@ -30,13 +21,27 @@
 /// TIM1:
 /// 00:     PD2 /PD0  PA1*/PA2  PC3*/PD1  PC4* *
 /// 01:     PC6 /PC3  PC7*/PC4  PC0*/PD1  PD3  *
-/// 10:     PC4 /PC3  PC7 /PD2  PC5 /PC6  PD4
+/// 11:     PC4 /PC3  PC7 /PD2  PC5 /PC6  PD4
 
-uint8_t matrix_data[7][8] = {
+#define PWM_MAX 4096
+
+#define ROWCOUNT (MATRIX_WIDTH)
+#define GROUPCOUNT 2
+
+#define G0T0C2_COL 1
+#define G0T0C3_COL 6
+#define G0T1C2_COL 4
+#define G0T1C3_COL 0
+#define G0T1C4_COL 5
+#define G1T0C2_COL 7
+#define G1T0C3_COL 3
+#define G1T0C4_COL 2
+
+uint8_t matrix_data[MATRIX_HEIGHT][MATRIX_WIDTH] = {
   {0, 255, 0, 255, 0, 255, 0, 255},
   {255, 0, 255, 0, 255, 0, 255, 0},
-  {0, 0, 0, 0, 0, 0, 0, 0},
-  {0, 0, 0, 0, 0, 0, 0, 0},
+  {0, 64, 0, 64, 0, 64, 0, 64},
+  {64, 0, 64, 0, 64, 0, 64, 0},
   {0, 0, 0, 0, 0, 0, 0, 0},
   {0, 0, 0, 0, 0, 0, 0, 0},
   {0, 0, 0, 0, 0, 0, 0, 0},
@@ -44,15 +49,13 @@ uint8_t matrix_data[7][8] = {
 
 static uint8_t row = 0, group = 0;
 
-struct row {
+static const struct row {
   GPIO_TypeDef *port;
   uint8_t pin;
   uint8_t group;
   uint8_t timer;
   uint8_t channel;
-};
-
-static const struct row rows[] = {
+} rows[ROWCOUNT] = {
   { GPIOD, 2, 0, 1, 2 },
   { GPIOC, 7, 0, 0, 1 },
   { GPIOC, 4, 1, 0, 3 },
@@ -83,6 +86,10 @@ static void set_high(uint8_t row) {
     | (GPIO_Speed_10MHz | GPIO_CNF_OUT_PP)<<(4*rows[row].pin);
 }
 
+static uint16_t get_val(uint8_t row, uint8_t col) {
+  return gamma_lut[matrix_data[(row <= col) ? row : row - 1][col]];
+}
+
 static void next_group(void) {
   float_all();
 
@@ -109,11 +116,11 @@ static void next_group(void) {
       attach_group(group, row);
 
       // TODO: Load values
-      TIM1->CH2CVR = 12;
-      TIM1->CH3CVR = 12;
-      TIM2->CH2CVR = 12;
-      TIM2->CH3CVR = 12;
-      TIM2->CH4CVR = 12;
+      TIM1->CH2CVR = get_val(row, G0T0C2_COL);
+      TIM1->CH3CVR = get_val(row, G0T0C3_COL);
+      TIM2->CH2CVR = get_val(row, G0T1C2_COL);
+      TIM2->CH3CVR = get_val(row, G0T1C3_COL);
+      TIM2->CH4CVR = get_val(row, G0T1C4_COL);
 
       TIM1->BDTR |= TIM_MOE;
       TIM2->BDTR |= TIM_MOE;
@@ -127,9 +134,9 @@ static void next_group(void) {
       attach_group(group, row);
 
       // TODO: Load values
-      TIM1->CH2CVR = 128;
-      TIM1->CH3CVR = 128;
-      TIM1->CH4CVR = 128;
+      TIM1->CH2CVR = get_val(row, G1T0C2_COL);
+      TIM1->CH3CVR = get_val(row, G1T0C3_COL);
+      TIM1->CH4CVR = get_val(row, G1T0C4_COL);
 
       TIM1->BDTR |= TIM_MOE;
       TIM1->CTLR1 |= TIM_CEN;

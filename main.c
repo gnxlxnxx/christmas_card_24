@@ -33,14 +33,14 @@ int main(void) {
 
     matrix_update();
     ws2812_update();
-    touch_update();
 
+    touch_update();
     if (!lock_animations) {
       if (btn_left && btn_left_toggled) {
         ws2812_next_mode();
       }
     }
 
-    while (SysTick->CNT - start < Ticks_from_Us(300)) {}
+    while (SysTick->CNT - start < Ticks_from_Us(256)) {}
   }
 }
