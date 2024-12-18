@@ -1,7 +1,13 @@
 #include <stdint.h>
+#include <string.h>
 #include "matrix.h"
 #include "random.h"
 #include "text.h"
+#include "img_scroll.h"
+
+static const char merry_christmas[] = "Fröhliche Weihnachten wünscht die Fachschaft "
+                                     "Elektro- und Informationstechnik der "
+                                     "\x80 Universität Stuttgart!";
 
 static enum matrix_modes {
   MODE_MERRY_CHRISTMAS,
@@ -15,44 +21,56 @@ static uint32_t matrix_counter = 0;
 static uint32_t matrix_counter2 = 0;
 static int num_x = 0;
 
-uint8_t buffer_matrix[MATRIX_HEIGHT][MATRIX_WIDTH] = {0};
-
-static const char *merry_christmas = "Fröhliche Weihnachten wünscht die Fachschaft "
-                                     "Elektro- und Informationstechnik der "
-                                     "\x80 Universität Stuttgart!";
+static uint8_t buffer_matrix[MATRIX_HEIGHT][MATRIX_WIDTH] = {0};
 
 void matrix_animation_update(void) {
   switch(mode) {
     case MODE_MERRY_CHRISTMAS:
-      if(matrix_counter++ >= 600){
-        if (!text_step()) {
-          text_start(merry_christmas, 127);
+      if(matrix_counter++ >= 600) {
+        if (matrix_counter2 == 0) {
+          if (!text_step()) {
+            matrix_counter2 = 1;
+            img_scroll_start(3);
+          }
+        } else {
+          if (!img_scroll_step()) {
+            matrix_counter2 = 0;
+            text_start(merry_christmas, 127);
+          }
         }
         matrix_counter = 0;
       }
       break;
 
     case MODE_SNOWFALL:
-      if(matrix_counter++ >= 1000){
-        int sum = 0;
-        for(int col = 0; col < MATRIX_WIDTH; col++){
-          matrix_data[6][col] |= matrix_data[5][col];
-          sum += (matrix_data[6][col]>0) ?1 :0;
-        }
-        if(sum == 8){
-          for(int col = 0; col < MATRIX_WIDTH; col++){
-            matrix_data[6][col] = 0;
+      if(matrix_counter++ >= 1000) {
+        bool bottom_full = true;
+        for(int col = 0; col < MATRIX_WIDTH; col++) {
+          if (!matrix_counter2) {
+            matrix_data[MATRIX_HEIGHT - 1][col] |= matrix_data[MATRIX_HEIGHT - 2][col];
+          }
+          if (matrix_data[MATRIX_HEIGHT - 1][col] == 0) {
+            bottom_full = false;
           }
         }
-        for(int row = MATRIX_HEIGHT-2; row > 0; row--){
-          for(int col = 0; col < MATRIX_WIDTH; col++){
-            matrix_data[row][col] = matrix_data[row-1][col];
-          }
+        if (bottom_full) {
+          matrix_counter2 = 16 << 7;
         }
-        for(int col = 0; col < MATRIX_WIDTH; col++){
-          matrix_data[0][col] = (rand8() > 250)?150:0;
+
+        memmove(matrix_data + 1, matrix_data, sizeof (matrix_data) - 2 * sizeof (matrix_data[0]));
+
+        for(int col = 0; col < MATRIX_WIDTH; col++) {
+          matrix_data[0][col] = (rand8() > 250) ? 127 : 0;
         }
         matrix_counter = 0;
+      }
+      if (matrix_counter2) {
+        if (matrix_counter2-- % 16 == 0) {
+          for (int col = 0; col < MATRIX_WIDTH; col++) {
+            uint8_t cur = matrix_data[MATRIX_HEIGHT - 1][col];
+            matrix_data[MATRIX_HEIGHT - 1][col] = ((cur << 7) - cur) >> 7;
+          }
+        }
       }
       break;
 
@@ -61,15 +79,15 @@ void matrix_animation_update(void) {
         for (int row = 0; row < MATRIX_HEIGHT; row++) {
           for (int col = 0; col < MATRIX_WIDTH; col++) {
             uint8_t cur = matrix_data[row][col];
-            matrix_data[row][col] = ((cur << 6) - cur) >> 6;
+            matrix_data[row][col] = ((cur << 7) - cur) >> 7;
           }
         }
         matrix_counter2 = 0;
       }
-      if (matrix_counter++ >= 512) {
+      if (matrix_counter++ >= 1024) {
         if (rand8() < 128) {
-          uint8_t rand_row = rand8()%MATRIX_HEIGHT;
-          uint8_t rand_col = rand8()%MATRIX_WIDTH;
+          uint8_t rand_row = rand8() % MATRIX_HEIGHT;
+          uint8_t rand_col = rand8() % MATRIX_WIDTH;
           matrix_data[rand_row][rand_col] = 255;
         }
         matrix_counter = 0;
@@ -79,8 +97,8 @@ void matrix_animation_update(void) {
     case MODE_RANDOM_PULSE:
       if (matrix_counter++ >= 40) {
         if (num_x++ % 30 == 0){
-          uint8_t rand_row = rand8()%MATRIX_HEIGHT;
-          uint8_t rand_col = rand8()%MATRIX_WIDTH;
+          uint8_t rand_row = rand8() % MATRIX_HEIGHT;
+          uint8_t rand_col = rand8() % MATRIX_WIDTH;
           buffer_matrix[rand_row][rand_col] = 150;
         }
         num_x %= 250;
@@ -101,8 +119,7 @@ void matrix_animation_update(void) {
       }
       break;
 
-    default:
-      matrix_next_mode();
+    default:;
   }
 }
 
@@ -114,5 +131,6 @@ void matrix_next_mode(void) {
   }
 
   matrix_counter = 0;
+  matrix_counter2 = 0;
   num_x = 0;
 }

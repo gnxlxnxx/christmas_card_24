@@ -1,4 +1,3 @@
-#include <ch32v003fun.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
@@ -12,7 +11,7 @@ static uint8_t brightness = -1;
 
 static void scroll_left(void) {
   for (int y = 0; y < MATRIX_HEIGHT; y++) {
-    memmove(matrix_data[y], matrix_data[y] + 1, sizeof (matrix_data[0]) - 1);
+    memmove(matrix_data[y], matrix_data[y] + 1, sizeof (matrix_data[0]) - sizeof (matrix_data[0][0]));
     matrix_data[y][MATRIX_WIDTH - 1] = 0;
   }
 }
