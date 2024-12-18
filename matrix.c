@@ -79,11 +79,17 @@ static void attach_group(uint8_t group, uint8_t row) {
 static enum matrix_modes {
   MODE_MERRY_CHRISTMAS,
   MODE_SNOWFALL,
-  MODE_END
+  MODE_SPARKLE,
+  MODE_RANDOM_PULSE,
+  MODE_END,
+  MODE_RANDOM_PULSE_INVERTED,
 } mode;
 
 uint32_t matrix_counter = 0;
+uint32_t matrix_counter2 = 0;
 int letter_counter = 0;
+int num_x = 0;
+
 char* merry_christmas = "Frohe Weihnachten-wuenscht die FS-EI!";
 
 uint8_t buffer_matrix[7][8] = {0};
@@ -204,7 +210,76 @@ void matrix_update(void) {
         }
         matrix_counter = 0;
       }
+      break;
 
+    case MODE_SPARKLE:
+      if (matrix_counter2++ >= 16) {
+        for (int row = 0; row < MATRIX_HEIGHT; row++) {
+          for (int col = 0; col < MATRIX_WIDTH; col++) {
+            uint8_t cur = matrix_data[row][col];
+            matrix_data[row][col] = gamma_lut[((cur << 6) - cur) >> 6];
+          }
+        }
+        matrix_counter2 = 0;
+      }
+      if (matrix_counter++ >= 512) {
+        if (rand8() < 128) {
+          uint8_t rand_row = rand8()%MATRIX_HEIGHT;
+          uint8_t rand_col = rand8()%MATRIX_WIDTH;
+          matrix_data[rand_row][rand_col] = gamma_lut[255];
+        }
+        matrix_counter = 0;
+      }
+      break;
+
+    case MODE_RANDOM_PULSE:
+      if (matrix_counter++ >= 40) {
+        if (num_x++ % 30 == 0){
+          uint8_t rand_row = rand8()%MATRIX_HEIGHT;
+          uint8_t rand_col = rand8()%MATRIX_WIDTH;
+          buffer_matrix[rand_row][rand_col] = 150;
+        }
+        num_x %= 250;
+
+        for (int row = 0; row < MATRIX_HEIGHT; row++) {
+          for (int col = 0; col < MATRIX_WIDTH; col++) {
+            if (buffer_matrix[row][col] < matrix_data[row][col]) {
+              matrix_data[row][col] -= 1;
+            } else if (buffer_matrix[row][col] > matrix_data[row][col]) {
+              matrix_data[row][col] += 1;
+            }
+            if (buffer_matrix[row][col] == matrix_data[row][col]) {
+              buffer_matrix[row][col] = 0;
+            }
+          }
+        }
+        matrix_counter = 0;
+      }
+      break;
+
+    case MODE_RANDOM_PULSE_INVERTED:
+      if (matrix_counter++ >= 40) {
+        if (num_x++ % 5 == 0){
+          uint8_t rand_row = rand8()%MATRIX_HEIGHT;
+          uint8_t rand_col = rand8()%MATRIX_WIDTH;
+          buffer_matrix[rand_row][rand_col] = 0;
+        }
+        num_x %= 250;
+
+        for (int row = 0; row < MATRIX_HEIGHT; row++) {
+          for (int col = 0; col < MATRIX_WIDTH; col++) {
+            if (buffer_matrix[row][col] < matrix_data[row][col]) {
+              matrix_data[row][col] -= 1;
+            } else if (buffer_matrix[row][col] > matrix_data[row][col]) {
+              matrix_data[row][col] += 1;
+            }
+            if (buffer_matrix[row][col] == matrix_data[row][col]) {
+              buffer_matrix[row][col] = 150;
+            }
+          }
+        }
+        matrix_counter = 0;
+      }
       break;
 
     default:
@@ -220,8 +295,10 @@ void matrix_next_mode(void) {
   for(int row = 0; row < 7; row++){
     for(int col = 0; col < 8; col++){
       matrix_data[row][col] = 0;
+      buffer_matrix[row][col] = 0;
     }
   }
   letter_counter = 0;
   matrix_counter = 0;
+  num_x = 0;
 }
