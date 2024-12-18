@@ -1,16 +1,36 @@
+#include <ch32v003fun.h>
+#include <stdint.h>
 #include "matrix.h"
-#include "ch32v003fun.h"
-#include "letters.h"
-#include <string.h>
 
-/// LED1:   PD2
-/// LED2:   PC7
-/// LED3:   PC4
-/// LED4:   PC3
-/// LED5:   PC2
-/// LED6:   PC1
-/// LED7:   PC0
-/// LED8:   PA1
+#define MATRIX_WIDTH 8
+#define MATRIX_HEIGHT 7
+
+#define ROWCOUNT (MATRIX_WIDTH)
+#define GROUPCOUNT 3
+
+#define PWM_MAX 1023
+
+#define ROW_PWM_CNF (GPIO_Speed_10MHz | GPIO_CNF_OUT_OD_AF)
+
+/// LED1:   PD2 *
+/// LED2:   PC7 *
+/// LED3:   PC4 *
+/// LED4:   PC3 *
+/// LED5:   PC2 *
+/// LED6:   PC1 *
+/// LED7:   PC0 *
+/// LED8:   PA1 *
+///
+/// TIM2:
+/// 00:     PD4  PD3  PC0  PD7
+/// 01:     PC5  PC2* PD2* PC1* *
+/// 10:     PC1  PD3  PC0  PD7 
+/// 11:     PC1  PC7  PD6  PD5 
+///
+/// TIM1:
+/// 00:     PD2 /PD0  PA1*/PA2  PC3*/PD1  PC4* *
+/// 01:     PC6 /PC3  PC7*/PC4  PC0*/PD1  PD3  *
+/// 10:     PC4 /PC3  PC7 /PD2  PC5 /PC6  PD4
 
 uint8_t matrix_data[7][8] = {
   {0, 0, 0, 0, 0, 0, 0, 0},
@@ -21,15 +41,15 @@ uint8_t matrix_data[7][8] = {
   {0, 0, 0, 0, 0, 0, 0, 0},
   {0, 0, 0, 0, 0, 0, 0, 0},
 };
-uint8_t col = 0;
-uint8_t brightness_index = 2;
 
-struct Pin{
-  GPIO_TypeDef* base_addr;
-  uint32_t offset;
+static uint8_t row = 0, group = 0;
+
+struct row {
+  GPIO_TypeDef *port;
+  uint8_t pin;
 };
 
-struct Pin pins[8] = {
+static const struct row rows[] = {
   { GPIOD, 2 },
   { GPIOC, 7 },
   { GPIOC, 4 },
@@ -40,84 +60,48 @@ struct Pin pins[8] = {
   { GPIOA, 1 },
 };
 
-void output_matrix() {
-  // set old column pin high and to input
-  pins[col].base_addr -> BSHR  |=  (0b1<<(pins[col].offset));
-  uint32_t cfg = pins[col].base_addr -> CFGLR;
-  cfg &= ~(0b1111<<(4*pins[col].offset));
-  cfg |= (GPIO_Speed_10MHz | GPIO_CNF_OUT_PP)<<(4*pins[col].offset);
-  pins[col].base_addr -> CFGLR = cfg;
-  /* pins[col].base_addr -> CFGLR &= ~(0b1111<<(4*pins[col].offset)); */
-  /* pins[col].base_addr -> CFGLR |=  (GPIO_Speed_10MHz | GPIO_CNF_OUT_PP)<<(4*pins[col].offset); */
+static void next_row(void) {
+  rows[row].port->CFGLR = (rows[row].port->CFGLR & ~(0xf<<(4*rows[row].pin)))
+    | ROW_PWM_CNF<<(4*rows[row].pin);
 
-  // update column
-  col = (col+1)%8;
+  row = (row + 1) % ROWCOUNT;
 
-  // iterate through rows
-  for(int row = 0; row < 7; row++){
-    int data_row = col + row;
-    if(data_row > 6){
-        data_row -= 7;
-    }
-    if(matrix_data[data_row][col] > brightness_index) {
-      // set pin high
-      pins[(col + 1 + row) % 8].base_addr -> CFGLR &= ~(0b1111<<(4*pins[(col + 1 + row) % 8].offset));
-      pins[(col + 1 + row) % 8].base_addr -> CFGLR |=  (GPIO_Speed_10MHz | GPIO_CNF_OUT_PP) << (4*pins[(col + 1 + row) % 8].offset);
-      pins[(col + 1 + row) % 8].base_addr -> BSHR  |=  (0b1<<pins[(col + 1 + row) % 8].offset);
-    } else {
-      // set pin to input
-      pins[(col + 1 + row) % 8].base_addr -> CFGLR &= ~(0b1111<<(4*pins[(col + 1 + row) % 8].offset));
-      pins[(col + 1 + row) % 8].base_addr -> CFGLR |=  (0b0100) << (4*pins[(col + 1 + row) % 8].offset);
-    }
+  rows[row].port->CFGLR = (rows[row].port->CFGLR & ~(0xf<<(4*rows[row].pin)))
+    | (GPIO_Speed_10MHz | GPIO_CNF_OUT_PP)<<(4*rows[row].pin);
+}
+
+static void next_group(void) {
+  group++;
+  if (group >= GROUPCOUNT) {
+    group = 0;
+    next_row();
   }
 
-  // set column pin low
-  cfg  = pins[col].base_addr -> CFGLR;
-  cfg &= ~(0b1111<<(4*pins[col].offset));
-  cfg |=  (0b0001<<(4*pins[col].offset));
-  pins[col].base_addr -> CFGLR = cfg;
-
-  /* pins[col].base_addr -> CFGLR &= ~(0b1111<<(4*pins[col].offset)); */
-  /* pins[col].base_addr -> CFGLR |=  (0b0001<<(4*pins[col].offset)); */
-  pins[col].base_addr -> BSHR  |=  (0b1<<(pins[col].offset+16));
-
-  if(col == 0){
-    if(brightness_index != 0){
-      brightness_index--;
-    } else {
-      brightness_index = 2;
-    }
+  switch (group) {
   }
 }
 
-static enum matrix_modes {
-  MODE_MERRY_CHRISTMAS,
-  MODE_END
-} mode;
+void matrix_init(void) {
+  RCC->APB2PRSTR |= RCC_APB2Periph_TIM1;
+  RCC->APB2PRSTR &= ~(RCC_APB2Periph_TIM1);
+  RCC->APB1PRSTR |= RCC_APB1Periph_TIM2;
+  RCC->APB1PRSTR &= ~(RCC_APB1Periph_TIM2);
 
-int matrix_counter = 0;
-int letter_counter = 0;
-const char* merry_christmas = "Frohe Weihnachten-wuenscht die FS-EI!";
+  TIM1->ATRLR = PWM_MAX;
+  TIM2->ATRLR = PWM_MAX;
 
-void matrix_update(){
-  switch(mode) {
-    case MODE_MERRY_CHRISTMAS:
-      if(matrix_counter < 1000){
-        matrix_counter++;
-      } else {
-        for(int row = 0; row < 7; row++){
-          for(int col = 0; col < 8; col++){
-            matrix_data[row][col] = get_scrolled_letter(merry_christmas, letter_counter, row, col);
-          }
-        }
-        letter_counter = (letter_counter+1)%(36*5);
-        matrix_counter = 0;
-      }
-      break;
-  }
-  output_matrix();
+  TIM1->SWEVGR |= TIM_UG;
+  TIM2->SWEVGR |= TIM_UG;
+
+  rows[0].port->CFGLR |= ROW_PWM_CNF<<(4*rows[0].pin);
+  GPIOC->CFGLR |= ROW_PWM_CNF<<(4*7) | ROW_PWM_CNF<<(4*4) | ROW_PWM_CNF<<(4*3)
+    | ROW_PWM_CNF<<(4*2) | ROW_PWM_CNF<<(4*1) | ROW_PWM_CNF<<(4*0);
+  rows[7].port->CFGLR |= ROW_PWM_CNF<<(4*rows[7].pin);
+
+  rows[0].port->OUTDR |= 1<<rows[0].pin;
+  GPIOC->OUTDR |= 0b10011111;
+  rows[7].port->OUTDR |= 1<<rows[7].pin;
 }
 
-void matrix_next_mode(void) {
-  mode = mode + 1 % MODE_END;
+void matrix_update(void) {
 }

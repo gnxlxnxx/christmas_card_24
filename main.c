@@ -11,10 +11,13 @@ static bool lock_animations = false;
 int main(void) {
   SystemInit();
   RCC->APB2PCENR |= RCC_APB2Periph_GPIOD | RCC_APB2Periph_GPIOC |
-                    RCC_APB2Periph_GPIOA | RCC_APB2Periph_AFIO;
+                    RCC_APB2Periph_GPIOA | RCC_APB2Periph_AFIO |
+                    RCC_APB2Periph_TIM1;
+  RCC->APB1PCENR |= RCC_APB1Periph_TIM2;
 
   ws2812_init();
   usb_init();
+  matrix_init();
 
   touch_init();
   if (btn_left && btn_right) {
