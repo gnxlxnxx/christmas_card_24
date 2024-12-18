@@ -6,7 +6,7 @@
 #define MATRIX_HEIGHT 7
 
 #define ROWCOUNT (MATRIX_WIDTH)
-#define GROUPCOUNT 3
+#define GROUPCOUNT 2
 
 #define PWM_MAX 1023
 
@@ -33,8 +33,8 @@
 /// 10:     PC4 /PC3  PC7 /PD2  PC5 /PC6  PD4
 
 uint8_t matrix_data[7][8] = {
-  {0, 0, 0, 0, 0, 0, 0, 0},
-  {0, 0, 0, 0, 0, 0, 0, 0},
+  {0, 255, 0, 255, 0, 255, 0, 255},
+  {255, 0, 255, 0, 255, 0, 255, 0},
   {0, 0, 0, 0, 0, 0, 0, 0},
   {0, 0, 0, 0, 0, 0, 0, 0},
   {0, 0, 0, 0, 0, 0, 0, 0},
@@ -71,13 +71,53 @@ static void next_row(void) {
 }
 
 static void next_group(void) {
+  TIM1->BDTR &= ~TIM_MOE;
+  TIM2->BDTR &= ~TIM_MOE;
+  TIM1->CTLR1 &= ~TIM_CEN;
+  TIM2->CTLR1 &= ~TIM_CEN;
+  TIM1->CNT = 0;
+  TIM2->CNT = 0;
+
   group++;
   if (group >= GROUPCOUNT) {
     group = 0;
     next_row();
   }
+  /*group = 0;*/
+  /*next_row();*/
 
   switch (group) {
+    case 0:
+      AFIO->PCFR1 = (AFIO->PCFR1 & ~(AFIO_PCFR1_TIM1_REMAP | AFIO_PCFR1_TIM2_REMAP))
+        | AFIO_PCFR1_TIM1_REMAP_PARTIALREMAP | AFIO_PCFR1_TIM2_REMAP_PARTIALREMAP1;
+      TIM1->CCER = TIM_CC2E | TIM_CC2P | TIM_CC3E | TIM_CC3P;
+      TIM2->CCER = TIM_CC2E | TIM_CC2P | TIM_CC3E | TIM_CC3P | TIM_CC4E | TIM_CC4P;
+
+      // TODO: Load values
+      TIM1->CH2CVR = 12;
+      TIM1->CH3CVR = 12;
+      TIM2->CH2CVR = 12;
+      TIM2->CH3CVR = 12;
+      TIM2->CH4CVR = 12;
+
+      TIM1->BDTR |= TIM_MOE;
+      TIM2->BDTR |= TIM_MOE;
+      TIM1->CTLR1 |= TIM_CEN;
+      TIM2->CTLR1 |= TIM_CEN;
+      break;
+    case 1:
+      break;
+      AFIO->PCFR1 = (AFIO->PCFR1 & ~AFIO_PCFR1_TIM1_REMAP) | AFIO_PCFR1_TIM1_REMAP_NOREMAP;
+      TIM1->CCER = TIM_CC2E | TIM_CC2P | TIM_CC3E | TIM_CC3P | TIM_CC4E | TIM_CC4P;
+
+      // TODO: Load values
+      TIM1->CH2CVR = 12;
+      TIM1->CH3CVR = 12;
+      TIM1->CH4CVR = 12;
+
+      TIM1->BDTR |= TIM_MOE;
+      TIM1->CTLR1 |= TIM_CEN;
+      break;
   }
 }
 
@@ -93,6 +133,14 @@ void matrix_init(void) {
   TIM1->SWEVGR |= TIM_UG;
   TIM2->SWEVGR |= TIM_UG;
 
+  TIM1->CTLR1 |= TIM_ARPE;
+  TIM2->CTLR1 |= TIM_ARPE;
+
+  TIM1->CHCTLR1 |= TIM_OCMode_PWM1 | TIM_OCMode_PWM1<<8;
+  TIM1->CHCTLR2 |= TIM_OCMode_PWM1 | TIM_OCMode_PWM1<<8;
+  TIM2->CHCTLR1 |= TIM_OCMode_PWM1 | TIM_OCMode_PWM1<<8;
+  TIM2->CHCTLR2 |= TIM_OCMode_PWM1 | TIM_OCMode_PWM1<<8;
+
   rows[0].port->CFGLR |= ROW_PWM_CNF<<(4*rows[0].pin);
   GPIOC->CFGLR |= ROW_PWM_CNF<<(4*7) | ROW_PWM_CNF<<(4*4) | ROW_PWM_CNF<<(4*3)
     | ROW_PWM_CNF<<(4*2) | ROW_PWM_CNF<<(4*1) | ROW_PWM_CNF<<(4*0);
@@ -104,4 +152,5 @@ void matrix_init(void) {
 }
 
 void matrix_update(void) {
+  next_group();
 }
