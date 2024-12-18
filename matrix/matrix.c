@@ -2,8 +2,8 @@
 #include <stdint.h>
 #include "matrix.h"
 #include "random.h"
-#include "letters.h"
-#include <string.h>
+#include "text.h"
+
 #include "gamma_lut.h"
 
 /// LED1:   PD2 *
@@ -90,7 +90,7 @@ uint32_t matrix_counter2 = 0;
 int letter_counter = 0;
 int num_x = 0;
 
-char* merry_christmas = "Frohe Weihnachten-wuenscht die FS-EI!";
+char *merry_christmas = "Frohe Weihnachten wünscht die FS-EI!";
 
 uint8_t buffer_matrix[7][8] = {0};
 
@@ -178,15 +178,8 @@ void matrix_update(void) {
   switch(mode) {
     case MODE_MERRY_CHRISTMAS:
       if(matrix_counter++ >= 1000){
-        for(int row = 0; row < MATRIX_HEIGHT; row++){
-          for(int col = 0; col < MATRIX_WIDTH; col++){
-            matrix_data[row][col] = gamma_lut[150*get_scrolled_letter(merry_christmas, letter_counter, row, col)];
-          }
-        }
-        letter_offset_counter += 1;
-        if(letter_offset_counter == 6){
-          letter_counter = (letter_counter+1)%((strlen(merry_christmas)-1));
-          letter_offset_counter = 0;
+        if (!text_step()) {
+          text_start(merry_christmas, 64);
         }
         matrix_counter = 0;
       }

@@ -1,5 +1,5 @@
-#ifndef MATRIX_H_
-#define MATRIX_H_
+#ifndef MATRIX_MATRIX_H_
+#define MATRIX_MATRIX_H_
 
 #include <stdint.h>
 
@@ -12,4 +12,4 @@ void matrix_init(void);
 void matrix_update(void);
 void matrix_next_mode(void);
 
-#endif // MATRIX_H_
+#endif

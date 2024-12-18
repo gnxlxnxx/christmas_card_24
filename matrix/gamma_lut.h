@@ -1,5 +1,5 @@
-#ifndef GAMMA_LUT_H_
-#define GAMMA_LUT_H_
+#ifndef MATRIX_GAMMA_LUT_H_
+#define MATRIX_GAMMA_LUT_H_
 
 #include <stdint.h>
 
