@@ -91,7 +91,7 @@ static enum matrix_modes {
 
 uint32_t matrix_counter = 0;
 int letter_counter = 0;
-const char* merry_christmas = "Frohe Weihnachten-wuenscht die FS-EI!";
+char* merry_christmas = "Frohe Weihnachten-wuenscht die FS-EI!";
 
 uint8_t buffer_matrix[7][8] = {0};
 
@@ -135,6 +135,9 @@ void matrix_update(){
         matrix_counter = 0;
       }
 
+      break;
+    default:
+      matrix_next_mode();
       break;
   }
   output_matrix();
