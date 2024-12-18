@@ -1,7 +1,8 @@
 #include <ch32v003fun.h>
 #include <stdbool.h>
 #include "main.h"
-#include "matrix.h"
+#include "matrix/matrix.h"
+#include "matrix/animations.h"
 #include "usb.h"
 #include "ws2812.h"
 #include "touch.h"
@@ -32,6 +33,7 @@ int main(void) {
     uint32_t start = SysTick->CNT;
 
     matrix_update();
+    matrix_animation_update();
     ws2812_update();
 
     touch_update();

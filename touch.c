@@ -9,11 +9,11 @@
 
 #define HIST_LOW (1<<6)
 #define HIST_HIGH (1<<7) 
-#define MAX_TIME (Ticks_from_Us(100))
+#define MAX_TIME (Ticks_from_Us(96))
 
 /*#define DEBUG*/
 #ifdef DEBUG
-#include "matrix.h"
+#include "matrix/matrix.h"
 #endif
 
 uint16_t btn_left_analog = 0;
