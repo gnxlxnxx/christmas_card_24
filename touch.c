@@ -13,7 +13,7 @@
 
 /*#define DEBUG*/
 #ifdef DEBUG
-#include "matrix.h"
+#include "matrix/matrix.h"
 #endif
 
 uint16_t btn_left_analog = 0;

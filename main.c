@@ -1,7 +1,7 @@
 #include <ch32v003fun.h>
 #include <stdbool.h>
 #include "main.h"
-#include "matrix.h"
+#include "matrix/matrix.h"
 #include "usb.h"
 #include "ws2812.h"
 #include "touch.h"
