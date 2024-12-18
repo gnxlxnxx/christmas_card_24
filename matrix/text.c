@@ -6,8 +6,8 @@
 
 #include "letters.h"
 
-static const char *pos = NULL;
-static int col_pos = 0;
+static const char *pos = "";
+static int col_pos = MATRIX_WIDTH;
 static uint8_t brightness = -1;
 
 static void scroll_left(void) {

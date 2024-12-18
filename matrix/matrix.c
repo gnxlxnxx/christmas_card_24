@@ -85,12 +85,13 @@ static enum matrix_modes {
   MODE_RANDOM_PULSE_INVERTED,
 } mode;
 
-uint32_t matrix_counter = 0;
-uint32_t matrix_counter2 = 0;
-int letter_counter = 0;
-int num_x = 0;
+static uint32_t matrix_counter = 0;
+static uint32_t matrix_counter2 = 0;
+static int letter_counter = 0;
+static int num_x = 0;
 
-char *merry_christmas = "Frohe Weihnachten wünscht die FS-EI!";
+static const char *merry_christmas = "Frohe Weihnachten wünscht die FS-EI!";
+/*static const char *debug =  "!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~";*/
 
 uint8_t buffer_matrix[7][8] = {0};
 
@@ -174,6 +175,8 @@ void matrix_update(void) {
       TIM1->BDTR |= TIM_MOE;
       break;
   }
+
+  set_high(row);
 
   switch(mode) {
     case MODE_MERRY_CHRISTMAS:
@@ -282,8 +285,6 @@ void matrix_update(void) {
     default:
       matrix_next_mode();
   }
-
-  set_high(row);
 }
 
 void matrix_next_mode(void) {
