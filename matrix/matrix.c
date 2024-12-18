@@ -87,11 +87,9 @@ static enum matrix_modes {
 
 static uint32_t matrix_counter = 0;
 static uint32_t matrix_counter2 = 0;
-static int letter_counter = 0;
 static int num_x = 0;
 
 static const char *merry_christmas = "Frohe Weihnachten wünscht die FS-EI!";
-/*static const char *debug =  "!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~";*/
 
 uint8_t buffer_matrix[7][8] = {0};
 
@@ -180,9 +178,9 @@ void matrix_update(void) {
 
   switch(mode) {
     case MODE_MERRY_CHRISTMAS:
-      if(matrix_counter++ >= 1000){
+      if(matrix_counter++ >= 600){
         if (!text_step()) {
-          text_start(merry_christmas, 64);
+          text_start(merry_christmas, 127);
         }
         matrix_counter = 0;
       }
@@ -290,13 +288,10 @@ void matrix_update(void) {
 void matrix_next_mode(void) {
   mode = (mode + 1) % MODE_END;
 
-  for(int row = 0; row < 7; row++){
-    for(int col = 0; col < 8; col++){
-      matrix_data[row][col] = 0;
-      buffer_matrix[row][col] = 0;
-    }
+  if (mode == MODE_MERRY_CHRISTMAS) {
+    text_start(merry_christmas, 127);
   }
-  letter_counter = 0;
+
   matrix_counter = 0;
   num_x = 0;
 }

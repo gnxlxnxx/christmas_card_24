@@ -301,7 +301,9 @@ static const int8_t ascii_printable[][MAX_COLS] = {
   },
   // I
   {
+    0b1000001,
     0b1111111,
+    0b1000001,
     -1
   },
   // J
@@ -717,11 +719,11 @@ static const int8_t letter_unknown[] = {
 };
 
 static const int8_t letter_ue[] = {
-  0b0111100,
-  0b1000001,
+  0b0111101,
   0b1000000,
-  0b1000001,
-  0b0111100,
+  0b1000000,
+  0b0111101,
+  -1
 };
 
 static const int8_t *get_letter(char c) {

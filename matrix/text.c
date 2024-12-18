@@ -12,7 +12,8 @@ static uint8_t brightness = -1;
 
 static void scroll_left(void) {
   for (int y = 0; y < MATRIX_HEIGHT; y++) {
-    memmove(matrix_data[y], matrix_data[y] + 1, sizeof (matrix_data[0]));
+    memmove(matrix_data[y], matrix_data[y] + 1, sizeof (matrix_data[0]) - 1);
+    matrix_data[y][MATRIX_WIDTH - 1] = 0;
   }
 }
 
@@ -34,24 +35,22 @@ void text_start(const char *text, uint8_t text_brightness) {
   brightness = text_brightness;
   col_pos = 0;
 
-  memset(matrix_data, 0, sizeof (matrix_data));
+  scroll_left();
 }
 
 bool text_step(void) {
   scroll_left();
 
   if (*pos == '\0') {
-    for (int y = 0; y < MATRIX_HEIGHT; y++) {
-      matrix_data[y][MATRIX_WIDTH - 1] = 0;
-    }
-
     return col_pos++ < MATRIX_WIDTH;
   }
 
   int8_t col = get_next_col();
 
   for (int y = 0; y < MATRIX_HEIGHT; y++, col >>= 1) {
-    matrix_data[y][MATRIX_WIDTH - 1] = (col & 1) ? brightness : 0;
+    if (col & 1) {
+      matrix_data[y][MATRIX_WIDTH - 1] = brightness;
+    }
   }
 
   return true;
