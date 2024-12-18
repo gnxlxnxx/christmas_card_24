@@ -42,7 +42,7 @@ uint8_t matrix_data[7][8] = {
   {0, 0, 0, 0, 0, 0, 0, 0},
 };
 
-static uint8_t row = 0, group = 1;
+static uint8_t row = 0, group = 0;
 
 struct row {
   GPIO_TypeDef *port;
@@ -71,7 +71,7 @@ static void float_all(void) {
 
 static void attach_group(uint8_t group, uint8_t row) {
   for (int i = 0; i < ROWCOUNT; i++) {
-    if (i != row && rows[row].group == group) {
+    if (i != row && rows[i].group == group) {
       rows[i].port->CFGLR = (rows[i].port->CFGLR & ~(0xf<<(4*rows[i].pin)))
         | (GPIO_Speed_10MHz | GPIO_CNF_OUT_OD_AF)<<(4*rows[i].pin);
     }
@@ -93,11 +93,11 @@ static void next_group(void) {
   TIM1->CNT = 0;
   TIM2->CNT = 0;
 
-  /*group++;*/
-  /*if (group >= GROUPCOUNT) {*/
-  /*  group = 0;*/
-  /*  row = (row + 1) % ROWCOUNT;*/
-  /*}*/
+  group++;
+  if (group >= GROUPCOUNT) {
+    group = 0;
+    row = (row + 1) % ROWCOUNT;
+  }
 
   switch (group) {
     case 0:
@@ -121,7 +121,6 @@ static void next_group(void) {
       TIM2->CTLR1 |= TIM_CEN;
       break;
     case 1:
-      break;
       AFIO->PCFR1 = (AFIO->PCFR1 & ~AFIO_PCFR1_TIM1_REMAP) | AFIO_PCFR1_TIM1_REMAP_NOREMAP;
       TIM1->CCER = TIM_CC2E | TIM_CC2P | TIM_CC3E | TIM_CC3P | TIM_CC4E | TIM_CC4P;
 
@@ -146,6 +145,9 @@ void matrix_init(void) {
   RCC->APB1PRSTR |= RCC_APB1Periph_TIM2;
   RCC->APB1PRSTR &= ~(RCC_APB1Periph_TIM2);
 
+  TIM1->PSC = 0;
+  TIM2->PSC = 0;
+
   TIM1->ATRLR = PWM_MAX;
   TIM2->ATRLR = PWM_MAX;
 
@@ -159,11 +161,6 @@ void matrix_init(void) {
   TIM1->CHCTLR2 |= TIM_OCMode_PWM1 | TIM_OCMode_PWM1<<8;
   TIM2->CHCTLR1 |= TIM_OCMode_PWM1 | TIM_OCMode_PWM1<<8;
   TIM2->CHCTLR2 |= TIM_OCMode_PWM1 | TIM_OCMode_PWM1<<8;
-
-  /*rows[0].port->CFGLR |= ROW_PWM_CNF<<(4*rows[0].pin);*/
-  /*GPIOC->CFGLR |= ROW_PWM_CNF<<(4*7) | ROW_PWM_CNF<<(4*4) | ROW_PWM_CNF<<(4*3)*/
-  /*  | ROW_PWM_CNF<<(4*2) | ROW_PWM_CNF<<(4*1) | ROW_PWM_CNF<<(4*0);*/
-  /*rows[7].port->CFGLR |= ROW_PWM_CNF<<(4*rows[7].pin);*/
 
   rows[0].port->OUTDR |= 1<<rows[0].pin;
   GPIOC->OUTDR |= 0b10011111;
