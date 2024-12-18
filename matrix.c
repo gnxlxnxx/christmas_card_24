@@ -210,7 +210,7 @@ void matrix_update(void) {
           }
         }
         for(int col = 0; col < MATRIX_WIDTH; col++){
-          matrix_data[0][col] = (rand8() > 250)?gamma_lut[150]:0;
+          matrix_data[0][col] = (rand8() > 240)?gamma_lut[150]:0;
         }
         matrix_counter = 0;
       }
