@@ -1,0 +1,4 @@
+(fp_lib_table
+  (version 7)
+  (lib (name "usbc")(type "KiCad")(uri "${KIPRJMOD}/PCB-USB-C/PCB-USB-C.pretty")(options "")(descr ""))
+)

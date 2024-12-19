@@ -1,0 +1,126 @@
+(footprint "touch_pad"
+	(version 20240108)
+	(generator "pcbnew")
+	(generator_version "8.0")
+	(layer "F.Cu")
+	(descr "Through hole angled pin header, 1x01, 2.54mm pitch, 6mm pin length, single row")
+	(tags "Through hole angled pin header THT 1x01 2.54mm single row")
+	(property "Reference" "J3"
+		(at 0 0 0)
+		(layer "F.SilkS")
+		(uuid "63429edf-9432-448b-b3c4-14092c0678ac")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Value" "Conn_01x01_Pin"
+		(at 4.385 2.27 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "bc0dddbe-fe84-4367-a3e1-f0ce10df7800")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Footprint" ""
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "e426db8e-fd09-45cc-b079-9d81e9bb7c99")
+		(effects
+			(font
+				(size 1.27 1.27)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Datasheet" ""
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "168ddaf2-025f-41c2-9eb7-29fb73decbc5")
+		(effects
+			(font
+				(size 1.27 1.27)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Description" "Generic connector, single row, 01x01, script generated"
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "19448974-5263-4381-8389-f22596d52bf3")
+		(effects
+			(font
+				(size 1.27 1.27)
+				(thickness 0.15)
+			)
+		)
+	)
+	(attr through_hole)
+	(fp_line
+		(start 1.5 -0.635)
+		(end 2.135 -1.27)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(layer "F.Fab")
+		(uuid "7b731037-23dc-45cb-b0d4-bb15c2952e26")
+	)
+	(fp_line
+		(start 1.5 1.27)
+		(end 1.5 -0.635)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(layer "F.Fab")
+		(uuid "f0a04602-41b7-4a72-bbb6-a614bfb48ade")
+	)
+	(fp_line
+		(start 2.135 -1.27)
+		(end 4.04 -1.27)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(layer "F.Fab")
+		(uuid "7fc949df-e388-492e-936a-cca2e4fabf6e")
+	)
+	(fp_text user "${REFERENCE}"
+		(at 2.77 0 90)
+		(layer "F.Fab")
+		(uuid "1e1d3e19-b74f-4630-9093-4b0f7af190ca")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(pad "1" smd oval
+		(at 4.655 -4.655)
+		(size 11.01 11.01)
+		(layers "F.Cu" "F.Mask")
+		(uuid "2cb96cb7-56ea-40b2-b1a6-731ed4f3cb07")
+	)
+	(model "${KICAD6_3DMODEL_DIR}/Connector_PinHeader_2.54mm.3dshapes/PinHeader_1x01_P2.54mm_Horizontal.wrl"
+		(offset
+			(xyz 0 0 0)
+		)
+		(scale
+			(xyz 1 1 1)
+		)
+		(rotate
+			(xyz 0 0 0)
+		)
+	)
+)
