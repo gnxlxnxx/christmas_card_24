@@ -1,4 +1,3 @@
-#include <ch32v003fun.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
@@ -12,7 +11,7 @@ static uint8_t brightness = -1;
 
 static void scroll_left(void) {
   for (int y = 0; y < MATRIX_HEIGHT; y++) {
-    memmove(matrix_data[y], matrix_data[y] + 1, sizeof (matrix_data[0]) - 1);
+    memmove(matrix_data[y], matrix_data[y] + 1, sizeof (matrix_data[0]) - sizeof (matrix_data[0][0]));
     matrix_data[y][MATRIX_WIDTH - 1] = 0;
   }
 }
@@ -54,4 +53,20 @@ bool text_step(void) {
   }
 
   return true;
+}
+
+void utoa10(unsigned int val, char *str) {
+  char *str2 = str;
+
+  do {
+    *str2++ = val % 10 + '0';
+    val /= 10;
+  } while (val != 0);
+  *str2 = '\0';
+
+  for (str2 -= 1; str < str2; str++, str2--) {
+    char c = *str;
+    *str = *str2;
+    *str2 = c;
+  }
 }

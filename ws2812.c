@@ -87,7 +87,7 @@ uint32_t WS2812BLEDCallback(int ledno) {
       ws2812_counter = (ws2812_counter + 1) & 0x7ff;
     }
     break;
-  default:
+  default:;
   }
 
   for (int i = 0; i < 3; i++) {
