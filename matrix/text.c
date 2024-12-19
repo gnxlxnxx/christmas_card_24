@@ -54,3 +54,19 @@ bool text_step(void) {
 
   return true;
 }
+
+void utoa10(unsigned int val, char *str) {
+  char *str2 = str;
+
+  do {
+    *str2++ = val % 10 + '0';
+    val /= 10;
+  } while (val != 0);
+  *str2 = '\0';
+
+  for (str2 -= 1; str < str2; str++, str2--) {
+    char c = *str;
+    *str = *str2;
+    *str2 = c;
+  }
+}
