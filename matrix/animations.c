@@ -26,7 +26,7 @@ static uint8_t buffer_matrix[MATRIX_HEIGHT][MATRIX_WIDTH] = {0};
 void matrix_animation_update(void) {
   switch(mode) {
     case MODE_MERRY_CHRISTMAS:
-      if(matrix_counter++ >= 400) {
+      if (matrix_counter++ >= ((matrix_counter2) ? 600 : 400)) {
         if (matrix_counter2 == 0) {
           if (!text_step()) {
             matrix_counter2 = 1;
@@ -43,9 +43,9 @@ void matrix_animation_update(void) {
       break;
 
     case MODE_SNOWFALL:
-      if(matrix_counter++ >= 1000) {
+      if (matrix_counter++ >= 1000) {
         bool bottom_full = true;
-        for(int col = 0; col < MATRIX_WIDTH; col++) {
+        for (int col = 0; col < MATRIX_WIDTH; col++) {
           if (!matrix_counter2) {
             matrix_data[MATRIX_HEIGHT - 1][col] |= matrix_data[MATRIX_HEIGHT - 2][col];
           }
@@ -59,7 +59,7 @@ void matrix_animation_update(void) {
 
         memmove(matrix_data + 1, matrix_data, sizeof (matrix_data) - 2 * sizeof (matrix_data[0]));
 
-        for(int col = 0; col < MATRIX_WIDTH; col++) {
+        for (int col = 0; col < MATRIX_WIDTH; col++) {
           matrix_data[0][col] = (rand8() > 250) ? 127 : 0;
         }
         matrix_counter = 0;
@@ -127,7 +127,7 @@ void matrix_next_mode(void) {
   mode = (mode + 1) % MODE_END;
 
   if (mode == MODE_MERRY_CHRISTMAS) {
-    text_start(merry_christmas, 127);
+    text_start(merry_christmas, 64);
   }
 
   matrix_counter = 0;
