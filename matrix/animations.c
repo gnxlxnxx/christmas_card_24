@@ -26,7 +26,7 @@ static uint8_t buffer_matrix[MATRIX_HEIGHT][MATRIX_WIDTH] = {0};
 void matrix_animation_update(void) {
   switch(mode) {
     case MODE_MERRY_CHRISTMAS:
-      if(matrix_counter++ >= 600) {
+      if(matrix_counter++ >= 400) {
         if (matrix_counter2 == 0) {
           if (!text_step()) {
             matrix_counter2 = 1;
@@ -35,7 +35,7 @@ void matrix_animation_update(void) {
         } else {
           if (!img_scroll_step()) {
             matrix_counter2 = 0;
-            text_start(merry_christmas, 127);
+            text_start(merry_christmas, 64);
           }
         }
         matrix_counter = 0;

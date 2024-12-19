@@ -168,7 +168,7 @@ bool snake_step(void) {
       }
       return true;
     case STATE_MSG:
-      if (counter++ >= 600) {
+      if (counter++ >= 400) {
         if (!text_step()) {
           utoa10(score, score_text + sizeof (score_text) - 4);
           text_start(score_text, HEAD_BRIGHTNESS);
@@ -178,7 +178,7 @@ bool snake_step(void) {
       }
       break;
     case STATE_SCORE:
-      if (counter++ >= 600) {
+      if (counter++ >= 400) {
         if (!text_step()) {
           text_start(score_text, HEAD_BRIGHTNESS);
         }
