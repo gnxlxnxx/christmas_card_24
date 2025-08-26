@@ -61,7 +61,8 @@ static const struct row {
 
 static void float_all(void) {
   for (int i = 0; i < ROWCOUNT; i++) {
-    rows[i].port->CFGLR &= ~(0xf<<(4*rows[i].pin));
+    rows[i].port->CFGLR = (rows[i].port->CFGLR & ~(0xf<<(4*rows[i].pin)))
+      | GPIO_CNF_IN_FLOATING<<(4*rows[i].pin);
   }
 }
 
@@ -130,8 +131,6 @@ void matrix_update(void) {
       TIM1->CCER = TIM_CC2E | TIM_CC2P | TIM_CC3E | TIM_CC3P;
       TIM2->CCER = TIM_CC2E | TIM_CC2P | TIM_CC3E | TIM_CC3P | TIM_CC4E | TIM_CC4P;
 
-      attach_group(group, row);
-
       TIM1->CH2CVR = get_val(row, G0T0C2_COL);
       TIM1->CH3CVR = get_val(row, G0T0C3_COL);
       TIM2->CH2CVR = get_val(row, G0T1C2_COL);
@@ -140,20 +139,24 @@ void matrix_update(void) {
 
       TIM1->BDTR |= TIM_MOE;
       TIM2->BDTR |= TIM_MOE;
+
+      attach_group(group, row);
       break;
     case 1:
       AFIO->PCFR1 = (AFIO->PCFR1 & ~AFIO_PCFR1_TIM1_REMAP) | AFIO_PCFR1_TIM1_REMAP_NOREMAP;
       TIM1->CCER = TIM_CC2E | TIM_CC2P | TIM_CC3E | TIM_CC3P | TIM_CC4E | TIM_CC4P;
-
-      attach_group(group, row);
 
       TIM1->CH2CVR = get_val(row, G1T0C2_COL);
       TIM1->CH3CVR = get_val(row, G1T0C3_COL);
       TIM1->CH4CVR = get_val(row, G1T0C4_COL);
 
       TIM1->BDTR |= TIM_MOE;
+
+      attach_group(group, row);
       break;
   }
 
+  TIM1->CNT = 0;
+  TIM2->CNT = 0;
   set_high(row);
 }

@@ -55,15 +55,9 @@ void touch_update(void) {
   BTN_RIGHT_PORT->OUTDR &= ~(1<<BTN_RIGHT_PIN);
 
   uint32_t start = SysTick->CNT;
-
-#ifdef DEBUG
-  GPIOD->CFGLR |= (GPIO_Speed_50MHz | GPIO_CNF_OUT_PP)<<(4*0);
-  GPIOD->OUTDR |= 1<<0;
-#endif
-
   uint32_t btnl_elapsed = MAX_TIME, btnr_elapsed = MAX_TIME;
 
-  while ((btnl_elapsed == MAX_TIME || btnr_elapsed == MAX_TIME) && SysTick->CNT - start < MAX_TIME) {
+  while (SysTick->CNT - start < MAX_TIME) {
     if (btnl_elapsed == MAX_TIME && !(BTN_LEFT_PORT->INDR & 1<<BTN_LEFT_PIN)) {
       btnl_elapsed = SysTick->CNT - start;
     }
@@ -95,16 +89,4 @@ void touch_update(void) {
     btn_right_tcount = 0;
   }
   btn_right_analog = (btn_right) ? btnr_elapsed : 0;
-
-#ifdef DEBUG
-  GPIOD->OUTDR &= ~(1<<0);
-
-  uint8_t *pos = &matrix_data[0][0];
-  for (int8_t i = 31; i >= 0; i--) {
-    *pos++ = (btnl_elapsed & 1<<i) ? 255 : 0;
-  }
-
-  matrix_data[6][0] = (btn_left) ? 255 : 0;
-  matrix_data[6][7] = (btn_right) ? 255 : 0;
-#endif
 }
