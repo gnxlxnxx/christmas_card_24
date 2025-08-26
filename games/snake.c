@@ -47,7 +47,8 @@ static enum state {
 
 static uint8_t snake_field[MATRIX_HEIGHT][MATRIX_WIDTH] = {0};
 
-static uint8_t dir = DIR_RIGHT, dir_next = DIR_RIGHT;
+static uint8_t dir = DIR_RIGHT;
+static int dir_change = 0;
 static uint8_t length = 1, length_increase = 1;
 static uint8_t score = 0;
 static coord snake = start_pos, tail = start_pos;
@@ -86,7 +87,13 @@ static void gen_new_maultasch(void) {
 }
 
 static void advance_head(void) {
-  dir = dir_next;
+  if (dir_change > 0) {
+    dir_change--;
+    dir = (dir + 1) & DIR_MASK;
+  } else if (dir_change < 0) {
+    dir_change++;
+    dir = (dir - 1) & DIR_MASK;
+  }
 
   matrix_data[snake.y][snake.x] = SNAKE_BRIGHTNESS;
   snake_field[snake.y][snake.x] = TYPE_SNAKE | dir;
@@ -128,7 +135,7 @@ static void retreat_tail(void) {
 void snake_start(void) {
   state = STATE_PLAY;
   dir = DIR_RIGHT;
-  dir_next = DIR_RIGHT;
+  dir_change = 0;
   length = 1;
   length_increase = 1;
   score = 0;
@@ -146,13 +153,21 @@ void snake_start(void) {
   gen_new_maultasch();
 }
 
+static void show_score(void) {
+  state = STATE_SCORE;
+  counter = 0;
+  utoa10(score, score_text + sizeof (score_text) - 4);
+  text_start(score_text, HEAD_BRIGHTNESS);
+}
+
 bool snake_step(void) {
   switch (state) {
     case STATE_PLAY:
       if (btn_right && btn_right_toggled) {
-        dir_next = (dir + 1) & DIR_MASK;
-      } else if (btn_left && btn_left_toggled) {
-        dir_next = (dir - 1) & DIR_MASK;
+        dir_change++;
+      }
+      if (btn_left && btn_left_toggled) {
+        dir_change--;
       }
       if (counter++ >= 1024) {
         retreat_tail();
@@ -166,18 +181,22 @@ bool snake_step(void) {
 
         counter = 0;
       }
-      return true;
+      break;
     case STATE_MSG:
-      if (counter++ >= 400) {
-        if (!text_step()) {
-          utoa10(score, score_text + sizeof (score_text) - 4);
-          text_start(score_text, HEAD_BRIGHTNESS);
-          state = STATE_SCORE;
+      if (btn_left && btn_right && (btn_left_toggled || btn_right_toggled)) {
+        show_score();
+      } else if (counter++ >= 400) {
+        if (text_step()) {
+          counter = 0;
+        } else {
+          show_score();
         }
-        counter = 0;
       }
       break;
     case STATE_SCORE:
+      if (btn_left && btn_right && (btn_left_toggled || btn_right_toggled)) {
+        return false;
+      }
       if (counter++ >= 400) {
         if (!text_step()) {
           text_start(score_text, HEAD_BRIGHTNESS);
@@ -185,10 +204,6 @@ bool snake_step(void) {
         counter = 0;
       }
       break;
-  }
-
-  if (btn_left && btn_right && (btn_left_toggled || btn_right_toggled)) {
-    return false;
   }
 
   return true;
