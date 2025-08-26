@@ -60,19 +60,37 @@ static const struct row {
 };
 
 static void float_all(void) {
-  for (int i = 0; i < ROWCOUNT; i++) {
-    rows[i].port->CFGLR = (rows[i].port->CFGLR & ~(0xf<<(4*rows[i].pin)))
-      | GPIO_CNF_IN_FLOATING<<(4*rows[i].pin);
-  }
+  // for (int i = 0; i < ROWCOUNT; i++) {
+  //   rows[i].port->CFGLR = (rows[i].port->CFGLR & ~(0xf<<(4*rows[i].pin)))
+  //     | GPIO_CNF_IN_FLOATING<<(4*rows[i].pin);
+  // }
+  rows[0].port->CFGLR = (rows[0].port->CFGLR & ~(0xf<<(4*rows[0].pin)))
+    | GPIO_CNF_IN_FLOATING<<(4*rows[0].pin);
+  GPIOC->CFGLR = (GPIOC->CFGLR & ~0xf00fffff) | 0x40044444;
+  rows[7].port->CFGLR = (rows[7].port->CFGLR & ~(0xf<<(4*rows[7].pin)))
+    | GPIO_CNF_IN_FLOATING<<(4*rows[7].pin);
 }
 
 static void attach_group(uint8_t group, uint8_t row) {
-  for (int i = 0; i < ROWCOUNT; i++) {
-    if (i != row && rows[i].group == group) {
-      rows[i].port->CFGLR = (rows[i].port->CFGLR & ~(0xf<<(4*rows[i].pin)))
-        | (GPIO_Speed_10MHz | GPIO_CNF_OUT_OD_AF)<<(4*rows[i].pin);
-    }
+  // for (int i = 0; i < ROWCOUNT; i++) {
+  //   if (i != row && rows[i].group == group) {
+  //     rows[i].port->CFGLR = (rows[i].port->CFGLR & ~(0xf<<(4*rows[i].pin)))
+  //       | (GPIO_Speed_10MHz | GPIO_CNF_OUT_OD_AF)<<(4*rows[i].pin);
+  //   }
+  // }
+  switch(group) {
+    case 0:
+      rows[0].port->CFGLR = (rows[0].port->CFGLR & ~(0xf<<(4*rows[0].pin)))
+        | (GPIO_Speed_10MHz | GPIO_CNF_OUT_OD_AF)<<(4*rows[0].pin);
+      GPIOC->CFGLR = (GPIOC->CFGLR & ~0xf0000fff) | 0xd0000ddd;
+      break;
+    case 1:
+      GPIOC->CFGLR = (GPIOC->CFGLR & ~0xff000) | 0xdd000;
+      rows[7].port->CFGLR = (rows[7].port->CFGLR & ~(0xf<<(4*rows[7].pin)))
+        | (GPIO_Speed_10MHz | GPIO_CNF_OUT_OD_AF)<<(4*rows[7].pin);
+      break;
   }
+
 }
 
 static void set_high(uint8_t row) {
@@ -102,11 +120,17 @@ void matrix_init(void) {
   TIM1->CTLR1 |= TIM_CEN;
   TIM2->CTLR1 |= TIM_CEN;
 
+  TIM1->BDTR |= TIM_MOE;
+  TIM2->BDTR |= TIM_MOE;
+
   TIM1->CHCTLR1 |= TIM_OCMode_PWM1 | TIM_OCMode_PWM1<<8;
   TIM1->CHCTLR2 |= TIM_OCMode_PWM1 | TIM_OCMode_PWM1<<8;
   TIM2->CHCTLR1 |= TIM_OCMode_PWM1 | TIM_OCMode_PWM1<<8;
   TIM2->CHCTLR2 |= TIM_OCMode_PWM1 | TIM_OCMode_PWM1<<8;
 
+  // for (int i = 0; i < ROWCOUNT; i++ ) {
+  //   rows[i].port->OUTDR |= 1<<rows[i].pin;
+  // }
   rows[0].port->OUTDR |= 1<<rows[0].pin;
   GPIOC->OUTDR |= 0b10011111;
   rows[7].port->OUTDR |= 1<<rows[7].pin;
@@ -114,9 +138,6 @@ void matrix_init(void) {
 
 void matrix_update(void) {
   float_all();
-
-  TIM1->BDTR &= ~TIM_MOE;
-  TIM2->BDTR &= ~TIM_MOE;
 
   group++;
   if (group >= GROUPCOUNT) {
@@ -137,9 +158,6 @@ void matrix_update(void) {
       TIM2->CH3CVR = get_val(row, G0T1C3_COL);
       TIM2->CH4CVR = get_val(row, G0T1C4_COL);
 
-      TIM1->BDTR |= TIM_MOE;
-      TIM2->BDTR |= TIM_MOE;
-
       attach_group(group, row);
       break;
     case 1:
@@ -149,8 +167,6 @@ void matrix_update(void) {
       TIM1->CH2CVR = get_val(row, G1T0C2_COL);
       TIM1->CH3CVR = get_val(row, G1T0C3_COL);
       TIM1->CH4CVR = get_val(row, G1T0C4_COL);
-
-      TIM1->BDTR |= TIM_MOE;
 
       attach_group(group, row);
       break;
