@@ -1,4 +1,4 @@
-#include <ch32v003fun.h>
+#include <ch32fun.h>
 #include <stdint.h>
 #include "matrix.h"
 
@@ -126,7 +126,7 @@ void matrix_update(void) {
   switch (group) {
     case 0:
       AFIO->PCFR1 = (AFIO->PCFR1 & ~(AFIO_PCFR1_TIM1_REMAP | AFIO_PCFR1_TIM2_REMAP))
-        | AFIO_PCFR1_TIM1_REMAP_PARTIALREMAP | AFIO_PCFR1_TIM2_REMAP_PARTIALREMAP1;
+        | AFIO_PCFR1_TIM1_REMAP_PARTIALREMAP1 | AFIO_PCFR1_TIM2_REMAP_PARTIALREMAP1;
       TIM1->CCER = TIM_CC2E | TIM_CC2P | TIM_CC3E | TIM_CC3P;
       TIM2->CCER = TIM_CC2E | TIM_CC2P | TIM_CC3E | TIM_CC3P | TIM_CC4E | TIM_CC4P;
 

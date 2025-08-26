@@ -1,4 +1,4 @@
-#include <ch32v003fun.h>
+#include <ch32fun.h>
 #include <rv003usb.h>
 #include <tinyusb_hid.h>
 #include <stdint.h>

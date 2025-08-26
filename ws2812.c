@@ -1,4 +1,4 @@
-#include <ch32v003fun.h>
+#include <ch32fun.h>
 #include <stdint.h>
 #include "touch.h"
 #include "random.h"
