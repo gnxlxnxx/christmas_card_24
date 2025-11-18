@@ -1,6 +1,11 @@
 #ifndef MATRIX_LETTERS_H_
 #define MATRIX_LETTERS_H_
 
+// TODO: 9 height font idea:
+// 00-7f: fill col from row 0 (top)
+// 80:    mark end of character
+// 81-ff: fill col from row 2
+
 #include <stdint.h>
 
 #define MAX_COLS 5
