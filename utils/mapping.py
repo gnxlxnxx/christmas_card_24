@@ -21,6 +21,7 @@ tim1 = [
 ]
 
 mosi_pin = 'PC6'
+swio_pin = 'PD1'
 tx_pins = {'PD5', 'PD0', 'PD6', 'PC0'}
 
 t1_mapc = 2
@@ -48,6 +49,10 @@ for embassy_timer in range(2):
                         if mosi_pin not in remaining:
                             continue
                         remaining.remove(mosi_pin)
+
+                        if swio_pin not in remaining:
+                            continue
+                        remaining.remove(swio_pin)
 
                         for tx_pin in remaining.intersection(tx_pins):
                             remaining2 = remaining - {tx_pin}
