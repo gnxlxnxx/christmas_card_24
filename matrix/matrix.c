@@ -39,7 +39,6 @@
 #define G1T0C3_COL 3
 #define G1T0C4_COL 2
 
-uint8_t col = 0;
 uint8_t matrix_data[MATRIX_HEIGHT][MATRIX_WIDTH] = {0};
 
 static uint8_t row = 0, group = 0;
