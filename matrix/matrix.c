@@ -163,7 +163,9 @@ void matrix_update(void) {
       AFIO->PCFR1 = (AFIO->PCFR1 & ~AFIO_PCFR1_TIM1_REMAP) | AFIO_PCFR1_TIM1_REMAP_NOREMAP;
       TIM1->CCER = TIM_CC2E | TIM_CC2P | TIM_CC3E | TIM_CC3P | TIM_CC4E | TIM_CC4P;
 
-      TIM1->CH2CVR = get_val(row, G1T0C2_COL);
+      if (row < ROWCOUNT - 1) {
+        TIM1->CH2CVR = get_val(row, G1T0C2_COL);
+      }
       TIM1->CH3CVR = get_val(row, G1T0C3_COL);
       TIM1->CH4CVR = get_val(row, G1T0C4_COL);
 
