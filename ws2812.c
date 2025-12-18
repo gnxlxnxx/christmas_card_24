@@ -6,7 +6,7 @@
 
 #define WS2812DMA_IMPLEMENTATION
 #define WSGRB // For SK6805-EC15
-#define NR_LEDS 5
+#define NR_LEDS 6
 
 static uint16_t phases[NR_LEDS];
 static int frameno = 0;
@@ -30,8 +30,8 @@ static uint32_t output[NR_LEDS] = {0};
 static volatile int b1counter = 0;
 static volatile int b2counter = 0;
 
-static const uint8_t led_angles[] = {
-    0, 51, 102, 154, 204};
+static const uint16_t led_angles[] = {
+    0, 60, 120, 180, 240, 300};
 
 uint32_t WS2812BLEDCallback(int ledno) {
 
@@ -52,23 +52,24 @@ uint32_t WS2812BLEDCallback(int ledno) {
       desired_output[ledno] = snow_balls[ledno];
     } else {
       int num_snowballs_l = 0;
-      for (int i = 2; i < 5; i++)
+      for (int i = 3; i < 6; i++)
         num_snowballs_l += (snow_balls[i] != 0);
       int num_snowballs_r = 0;
-      for (int i = 0; i < 2; i++)
+      for (int i = 0; i < 3; i++)
         num_snowballs_r += (snow_balls[i] != 0);
       uint8_t hue = rand8();
       snow_balls[0] = snow_balls[1];
-      snow_balls[1] = rand8() % (3 + num_snowballs_r)
+      snow_balls[1] = snow_balls[2];
+      snow_balls[2] = rand8() % (3 + num_snowballs_r)
                           ? 0
                           : (huetable[(hue + 170) & 0xff] << 16) |
                                 huetable[(hue + 85) & 0xff] |
                                 (huetable[(hue + 0)] << 8);
 
       hue = rand8();
+      snow_balls[5] = snow_balls[4];
       snow_balls[4] = snow_balls[3];
-      snow_balls[3] = snow_balls[2];
-      snow_balls[2] = rand8() % (3 + num_snowballs_l)
+      snow_balls[3] = rand8() % (3 + num_snowballs_l)
                           ? 0
                           : (huetable[(hue + 170) & 0xff] << 16) |
                                 huetable[(hue + 85) & 0xff] |
@@ -103,11 +104,11 @@ uint32_t WS2812BLEDCallback(int ledno) {
   uint32_t value = output[ledno];
   if (b1counter) {
     switch (ledno) {
-    case 4:
-    case 2:
+    case 5:
+    case 3:
       value |= (b1counter >> 3) << 16;
       break;
-    case 3:
+    case 4:
       value |= b1counter << 16;
       break;
     }
@@ -130,9 +131,6 @@ uint32_t WS2812BLEDCallback(int ledno) {
 
 void ws2812_init(void) {
   WS2812BDMAInit();
-
-  // Fix WS2812 levels, needs 10K/1K pullup across Din and Vdd
-  GPIOC->CFGLR |= GPIO_CNF_OUT_OD_AF << (4 * 6);
 
   for (int k = 0; k < NR_LEDS; k++)
     phases[k] = k << 8;
